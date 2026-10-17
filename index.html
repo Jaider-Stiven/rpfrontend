@@ -15,7 +15,9 @@
 </head>
 <body>
     <div class="overlay"></div>
-    <div class="container">
+
+    <!-- VISTA 1: Contenedor de Autenticación (Login / Registro) -->
+    <div class="container" id="auth-container">
         <!-- Tarjeta Principal de Autenticación -->
         <div class="auth-card">
             <!-- Encabezado con Logo Temático -->
@@ -43,14 +45,14 @@
                     <label for="login-username">Usuario</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-user input-icon"></i>
-                        <input type="text" id="login-username" placeholder="Ingresa tu usuario" required>
+                        <input type="text" id="login-username" placeholder="Ingresa tu usuario" required autocomplete="username">
                     </div>
                 </div>
                 <div class="input-group">
                     <label for="login-password">Contraseña</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-lock input-icon"></i>
-                        <input type="password" id="login-password" placeholder="Ingresa tu contraseña" required>
+                        <input type="password" id="login-password" placeholder="Ingresa tu contraseña" required autocomplete="current-password">
                         <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePasswordVisibility('login-password', this)"></i>
                     </div>
                 </div>
@@ -66,14 +68,14 @@
                     <label for="register-username">Nuevo Usuario</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-user input-icon"></i>
-                        <input type="text" id="register-username" placeholder="Crea tu usuario" required>
+                        <input type="text" id="register-username" placeholder="Crea tu usuario" required autocomplete="new-password">
                     </div>
                 </div>
                 <div class="input-group">
                     <label for="register-password">Contraseña</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-lock input-icon"></i>
-                        <input type="password" id="register-password" placeholder="Mínimo 4 caracteres" required>
+                        <input type="password" id="register-password" placeholder="Mínimo 4 caracteres" required autocomplete="new-password">
                         <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePasswordVisibility('register-password', this)"></i>
                     </div>
                 </div>
@@ -85,10 +87,570 @@
         </div>
     </div>
 
+    <!-- VISTA 2: Pantalla de Menú Gastronómico (Se activa al iniciar sesión) -->
+    <div id="menu-view">
+        <!-- Barra de Navegación Superior -->
+        <header class="menu-navbar">
+            <div class="navbar-content">
+                <div class="navbar-brand" onclick="scrollToTop()">
+                    <i class="fa-solid fa-fire-flame-curved logo-icon"></i>
+                    <h2>Food<span>Express</span></h2>
+                </div>
+
+                <div class="navbar-actions">
+                    <!-- Badge del Usuario Autenticado -->
+                    <div class="user-badge">
+                        <div class="user-avatar-icon" id="user-avatar-letter">U</div>
+                        <span>Hola, <strong id="logged-username">Usuario</strong></span>
+                    </div>
+
+                    <!-- Botón de Carrito con Contador Dinámico -->
+                    <button class="cart-btn" onclick="toggleCartDrawer(true)" id="btn-open-cart" title="Ver pedido">
+                        <i class="fa-solid fa-bag-shopping"></i>
+                        <span>Mi Pedido</span>
+                        <span class="cart-badge" id="cart-counter">0</span>
+                    </button>
+
+                    <!-- Botón Cerrar Sesión -->
+                    <button class="logout-btn" onclick="logout()" title="Cerrar sesión">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Salir</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenido Principal del Menú -->
+        <main class="menu-main">
+            <!-- Hero Banner Gastronómico -->
+            <section class="menu-hero">
+                <div class="hero-text">
+                    <div class="hero-promo-badge">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Entrega Rápida en 25-35 min • Envíos gratis por compras > $30.000</span>
+                    </div>
+                    <h1>Elige tu comida favorita, <br><span id="hero-username-greeting">¡y te la llevamos volando!</span></h1>
+                    <p>Sabores artesanales, ingredientes frescos del día y la mejor selección gastronómica para ti.</p>
+                    
+                    <!-- Buscador en tiempo real -->
+                    <div class="search-bar-wrapper">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="food-search-input" placeholder="Buscar hamburguesas, pizzas, postres..." oninput="handleSearch(this.value)">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Filtros por Categoría -->
+            <section class="categories-section">
+                <h3 class="categories-section-title">
+                    <i class="fa-solid fa-utensils" style="color: var(--primary);"></i>
+                    Explora por Categorías
+                </h3>
+                <div class="categories-pills">
+                    <button class="category-pill active" onclick="filterCategory('all', this)">
+                        <i class="fa-solid fa-border-all"></i> Todos los Platos
+                    </button>
+                    <button class="category-pill" onclick="filterCategory('hamburguesas', this)">
+                        <i class="fa-solid fa-burger"></i> Hamburguesas
+                    </button>
+                    <button class="category-pill" onclick="filterCategory('pizzas', this)">
+                        <i class="fa-solid fa-pizza-slice"></i> Pizzas
+                    </button>
+                    <button class="category-pill" onclick="filterCategory('tacos', this)">
+                        <i class="fa-solid fa-bowl-food"></i> Tacos & Tex-Mex
+                    </button>
+                    <button class="category-pill" onclick="filterCategory('bebidas', this)">
+                        <i class="fa-solid fa-wine-glass"></i> Bebidas
+                    </button>
+                    <button class="category-pill" onclick="filterCategory('postres', this)">
+                        <i class="fa-solid fa-cake-candles"></i> Postres
+                    </button>
+                </div>
+            </section>
+
+            <!-- Catálogo de Platos del Menú -->
+            <section class="products-section">
+                <div class="products-header">
+                    <h3 id="current-category-title">Platos Destacados</h3>
+                    <span class="products-count" id="products-count-label">Cargando menú...</span>
+                </div>
+                <div class="products-grid" id="products-grid">
+                    <!-- Se renderiza dinámicamente con JavaScript -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- DRAWER LATERAL DE CARRITO DE COMPRAS -->
+    <div class="cart-drawer-overlay" id="cart-drawer-overlay" onclick="toggleCartDrawer(false)"></div>
+    <aside class="cart-drawer" id="cart-drawer">
+        <div class="cart-drawer-header">
+            <h3>
+                <i class="fa-solid fa-bag-shopping" style="color: var(--primary);"></i>
+                Tu Pedido FoodExpress
+            </h3>
+            <button class="close-drawer-btn" onclick="toggleCartDrawer(false)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="cart-items-container" id="cart-items-container">
+            <!-- Items del carrito renderizados con JS -->
+        </div>
+
+        <div class="cart-drawer-footer">
+            <div class="cart-summary-row">
+                <span>Subtotal:</span>
+                <span id="cart-subtotal">$0</span>
+            </div>
+            <div class="cart-summary-row">
+                <span>Costo de Envío:</span>
+                <span id="cart-shipping">$0</span>
+            </div>
+            <div class="cart-summary-row total-row">
+                <span>Total a Pagar:</span>
+                <span id="cart-total">$0</span>
+            </div>
+            <button class="checkout-btn" id="btn-checkout" onclick="openOrderModal()" disabled>
+                <span>Confirmar Pedido</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MODAL DE PEDIDO CONFIRMADO -->
+    <div class="order-modal-backdrop" id="order-modal-backdrop">
+        <div class="order-modal-card">
+            <div class="order-success-icon">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3>¡Pedido en Camino!</h3>
+            <p>Tu orden ha sido confirmada con éxito en FoodExpress. Nuestros chefs ya están preparando tu comida con los mejores ingredientes.</p>
+
+            <div class="order-details-box">
+                <div>
+                    <span>Número de Orden:</span>
+                    <strong id="modal-order-id" style="color: var(--primary);">#FE-0000</strong>
+                </div>
+                <div>
+                    <span>Cliente:</span>
+                    <strong id="modal-order-user">Usuario</strong>
+                </div>
+                <div>
+                    <span>Tiempo estimado:</span>
+                    <strong>25 - 35 minutos 🛵</strong>
+                </div>
+                <div>
+                    <span>Total Pagado:</span>
+                    <strong id="modal-order-total" style="color: var(--success);">$0</strong>
+                </div>
+            </div>
+
+            <button class="order-modal-btn" onclick="closeOrderModal()">
+                <span>Continuar Viendo el Menú</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Contenedor de Alertas Dinámicas (Toast Messages) -->
     <div id="toast-container"></div>
 
     <script>
+        // ==========================================
+        // CATÁLOGO DE PRODUCTOS GASTRONÓMICOS FOODEXPRESS
+        // ==========================================
+        const MENU_PRODUCTS = [
+            {
+                id: 1,
+                name: "Hamburguesa Doble Trufa & Bacon",
+                category: "hamburguesas",
+                price: 28500,
+                rating: "4.9",
+                badge: "🔥 Más Pedida",
+                desc: "Doble carne Angus 100% (240g), queso cheddar fundido, tocineta crujiente, cebolla caramelizada y salsa trufada especial.",
+                image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 2,
+                name: "Hamburguesa Crispy Chicken Ranch",
+                category: "hamburguesas",
+                price: 24000,
+                rating: "4.8",
+                badge: "Crujiente",
+                desc: "Pechuga de pollo apanada estilo sureño ultra crujiente, pepinillos dulces, lechuga fresca y aderezo ranch de la casa.",
+                image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 3,
+                name: "Pizza Suprema Napolitana",
+                category: "pizzas",
+                price: 34000,
+                rating: "4.9",
+                badge: "Artesanal",
+                desc: "Masa madre de fermentación lenta, salsa pomodoro italiana, mozzarella de búfala, jamón serrano y albahaca fresca.",
+                image: "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 4,
+                name: "Pizza Pepperoni Feast & Miel Picante",
+                category: "pizzas",
+                price: 32000,
+                rating: "4.8",
+                badge: "Favorita",
+                desc: "Abundante pepperoni americano tostado, queso mozzarella gratinado y un toque de miel infusionada con chile.",
+                image: "https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 5,
+                name: "Tacos de Birria Tradicional (x3)",
+                category: "tacos",
+                price: 26500,
+                rating: "5.0",
+                badge: "⭐ Chef Choice",
+                desc: "Tortillas doradas rellenas de suave carne de res estofada con queso derretido, cilantro, cebolla y consomé caliente para sopear.",
+                image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 6,
+                name: "Burrito Steak & Queso Fundido",
+                category: "tacos",
+                price: 25000,
+                rating: "4.7",
+                badge: "XXL",
+                desc: "Corte de res jugoso asado a la parrilla, arroz mexicano con especias, frijoles negros, guacamole y queso fundido.",
+                image: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 7,
+                name: "Malteada de Caramelo Salado & Brownie",
+                category: "bebidas",
+                price: 14500,
+                rating: "4.9",
+                badge: "Gourmet",
+                desc: "Helado artesanal de vainilla batido con toffee de caramelo salado, trozos de brownie húmedo y crema chantilly.",
+                image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 8,
+                name: "Limonada de Coco Cremosita",
+                category: "bebidas",
+                price: 11000,
+                rating: "4.8",
+                badge: "Refrescante",
+                desc: "Zumo natural de limones seleccionados frappé con leche de coco pura y un toque de hierbabuena fresca.",
+                image: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 9,
+                name: "Brownie Volcán con Helado",
+                category: "postres",
+                price: 15500,
+                rating: "4.9",
+                badge: "Caliente",
+                desc: "Pastel tibio de chocolate amargo 70% con centro líquido derretido, acompañado de bola de helado artesanal de vainilla.",
+                image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 10,
+                name: "Cheesecake de Frutos Rojos Silvestres",
+                category: "postres",
+                price: 16000,
+                rating: "4.8",
+                badge: "Suave",
+                desc: "Cremoso pastel de queso estilo New York sobre crujiente base de galleta con compota artesanal de arándanos y fresas.",
+                image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80"
+            }
+        ];
+
+        // Estado Global de la App
+        let currentCategory = 'all';
+        let searchQuery = '';
+        let shoppingCart = [];
+
+        // ==========================================
+        // MANEJO DE VISTAS (LOGIN / MENÚ)
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            // Verificar si el usuario ya tiene sesión iniciada
+            const savedSession = sessionStorage.getItem('foodexpress_user');
+            if (savedSession) {
+                try {
+                    const parsed = JSON.parse(savedSession);
+                    if (parsed && parsed.usuario) {
+                        showMenuScreen(parsed.usuario);
+                        return;
+                    }
+                } catch (e) {
+                    sessionStorage.removeItem('foodexpress_user');
+                }
+            }
+            // Si no hay sesión, asegurar vista login
+            showAuthScreen();
+        });
+
+        function showAuthScreen() {
+            document.body.classList.remove('in-menu');
+            document.getElementById('auth-container').classList.remove('hidden');
+            document.getElementById('menu-view').classList.remove('active-view');
+        }
+
+        function showMenuScreen(username) {
+            // Ocultar Auth y mostrar Menú
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('menu-view').classList.add('active-view');
+            document.body.classList.add('in-menu');
+
+            // Actualizar datos del usuario en la interfaz
+            const displayName = username || "Cliente FoodExpress";
+            document.getElementById('logged-username').innerText = displayName;
+            document.getElementById('user-avatar-letter').innerText = displayName.charAt(0).toUpperCase();
+            document.getElementById('hero-username-greeting').innerText = `¡${displayName}, te la llevamos volando!`;
+
+            // Renderizar productos
+            renderProducts();
+            updateCartUI();
+        }
+
+        function logout() {
+            sessionStorage.removeItem('foodexpress_user');
+            shoppingCart = [];
+            toggleCartDrawer(false);
+            showAuthScreen();
+            showToast("Sesión cerrada correctamente. ¡Hasta pronto!", "info");
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ==========================================
+        // RENDERIZADO DEL CATÁLOGO DE PRODUCTOS
+        // ==========================================
+        function formatMoney(amount) {
+            return '$ ' + amount.toLocaleString('es-CO');
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            const countLabel = document.getElementById('products-count-label');
+
+            // Filtrar productos por categoría y búsqueda
+            const filtered = MENU_PRODUCTS.filter(item => {
+                const matchesCat = (currentCategory === 'all') || (item.category === currentCategory);
+                const query = searchQuery.trim().toLowerCase();
+                const matchesSearch = !query || 
+                    item.name.toLowerCase().includes(query) || 
+                    item.desc.toLowerCase().includes(query) ||
+                    item.category.toLowerCase().includes(query);
+                return matchesCat && matchesSearch;
+            });
+
+            countLabel.innerText = `${filtered.length} platillo${filtered.length === 1 ? '' : 's'} disponible${filtered.length === 1 ? '' : 's'}`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="no-results">
+                        <i class="fa-solid fa-burger"></i>
+                        <h4>No encontramos platillos que coincidan</h4>
+                        <p>Intenta con otra búsqueda o selecciona una categoría diferente.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(item => `
+                <article class="food-card">
+                    <div class="food-img-wrapper">
+                        <img src="${item.image}" alt="${item.name}" class="food-img" loading="lazy">
+                        ${item.badge ? `<span class="food-badge">${item.badge}</span>` : ''}
+                        <span class="food-rating"><i class="fa-solid fa-star"></i> ${item.rating}</span>
+                    </div>
+                    <div class="food-details">
+                        <span class="food-category-tag">${item.category}</span>
+                        <h4 class="food-title">${item.name}</h4>
+                        <p class="food-desc">${item.desc}</p>
+                        <div class="food-card-footer">
+                            <div class="food-price"><span>$</span>${item.price.toLocaleString('es-CO')}</div>
+                            <button class="add-cart-btn" onclick="addToCart(${item.id})">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Agregar</span>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function filterCategory(cat, btnElement) {
+            currentCategory = cat;
+            document.querySelectorAll('.category-pill').forEach(btn => btn.classList.remove('active'));
+            if (btnElement) btnElement.classList.add('active');
+
+            const titleMap = {
+                'all': 'Todos los Platos Disponibles',
+                'hamburguesas': 'Hamburguesas Artesanales',
+                'pizzas': 'Pizzas al Horno',
+                'tacos': 'Tacos & Especialidades Tex-Mex',
+                'bebidas': 'Bebidas & Malteadas',
+                'postres': 'Postres & Dulces'
+            };
+            document.getElementById('current-category-title').innerText = titleMap[cat] || 'Platos';
+
+            renderProducts();
+        }
+
+        function handleSearch(val) {
+            searchQuery = val;
+            renderProducts();
+        }
+
+        // ==========================================
+        // GESTIÓN DEL CARRITO DE COMPRAS
+        // ==========================================
+        function toggleCartDrawer(open) {
+            const overlay = document.getElementById('cart-drawer-overlay');
+            const drawer = document.getElementById('cart-drawer');
+            if (open) {
+                overlay.classList.add('open');
+                drawer.classList.add('open');
+            } else {
+                overlay.classList.remove('open');
+                drawer.classList.remove('open');
+            }
+        }
+
+        function addToCart(productId) {
+            const product = MENU_PRODUCTS.find(p => p.id === productId);
+            if (!product) return;
+
+            const existingIndex = shoppingCart.findIndex(item => item.id === productId);
+            if (existingIndex > -1) {
+                shoppingCart[existingIndex].qty += 1;
+            } else {
+                shoppingCart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    image: product.image,
+                    qty: 1
+                });
+            }
+
+            updateCartUI();
+            showToast(`¡Agregado al pedido: ${product.name}!`, "success");
+
+            // Micro-animación en el botón del carrito
+            const cartBtn = document.getElementById('btn-open-cart');
+            cartBtn.style.transform = 'scale(1.15)';
+            setTimeout(() => { cartBtn.style.transform = ''; }, 200);
+        }
+
+        function changeQty(productId, delta) {
+            const index = shoppingCart.findIndex(item => item.id === productId);
+            if (index === -1) return;
+
+            shoppingCart[index].qty += delta;
+            if (shoppingCart[index].qty <= 0) {
+                shoppingCart.splice(index, 1);
+            }
+            updateCartUI();
+        }
+
+        function removeFromCart(productId) {
+            shoppingCart = shoppingCart.filter(item => item.id !== productId);
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const counter = document.getElementById('cart-counter');
+            const container = document.getElementById('cart-items-container');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const shippingEl = document.getElementById('cart-shipping');
+            const totalEl = document.getElementById('cart-total');
+            const checkoutBtn = document.getElementById('btn-checkout');
+
+            // Total de productos en unidades
+            const totalItems = shoppingCart.reduce((acc, curr) => acc + curr.qty, 0);
+            counter.innerText = totalItems;
+
+            if (shoppingCart.length === 0) {
+                container.innerHTML = `
+                    <div class="cart-empty-message">
+                        <i class="fa-solid fa-basket-shopping"></i>
+                        <h4>Tu canasta está vacía</h4>
+                        <p>Explora el menú y agrega tus comidas favoritas.</p>
+                    </div>
+                `;
+                subtotalEl.innerText = '$ 0';
+                shippingEl.innerText = '$ 0';
+                totalEl.innerText = '$ 0';
+                checkoutBtn.disabled = true;
+                return;
+            }
+
+            checkoutBtn.disabled = false;
+
+            // Calcular montos
+            const subtotal = shoppingCart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+            // Envío gratis si supera 30.000 COP, sino 4.000 COP
+            const shipping = subtotal >= 30000 ? 0 : 4000;
+            const total = subtotal + shipping;
+
+            subtotalEl.innerText = formatMoney(subtotal);
+            shippingEl.innerText = shipping === 0 ? '¡GRATIS!' : formatMoney(shipping);
+            totalEl.innerText = formatMoney(total);
+
+            // Renderizar lista de items
+            container.innerHTML = shoppingCart.map(item => `
+                <div class="cart-item">
+                    <img src="${item.image}" alt="${item.name}" class="cart-item-img">
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">${formatMoney(item.price * item.qty)}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="qty-btn" onclick="changeQty(${item.id}, -1)">-</button>
+                        <span class="qty-count">${item.qty}</span>
+                        <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+                    </div>
+                    <button class="cart-item-remove" onclick="removeFromCart(${item.id})" title="Eliminar">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // ==========================================
+        // PROCESO DE CHECKOUT / PEDIDO CONFIRMADO
+        // ==========================================
+        function openOrderModal() {
+            if (shoppingCart.length === 0) return;
+
+            const currentUser = document.getElementById('logged-username').innerText;
+            const currentTotal = document.getElementById('cart-total').innerText;
+            const randomId = Math.floor(1000 + Math.random() * 9000);
+
+            document.getElementById('modal-order-id').innerText = `#FE-${randomId}`;
+            document.getElementById('modal-order-user').innerText = currentUser;
+            document.getElementById('modal-order-total').innerText = currentTotal;
+
+            // Cerrar drawer y abrir modal
+            toggleCartDrawer(false);
+            document.getElementById('order-modal-backdrop').classList.add('open');
+
+            // Vaciar carrito
+            shoppingCart = [];
+            updateCartUI();
+        }
+
+        function closeOrderModal() {
+            document.getElementById('order-modal-backdrop').classList.remove('open');
+            showToast("¡Pedido en preparación! Te notificaremos cuando llegue el repartidor.", "success");
+        }
+
+        // ==========================================
+        // CONTROLADORES DE AUTENTICACIÓN (LOGIN & REGISTRO)
+        // ==========================================
         // Cambiar entre la pestaña de Login y Registro con animación
         function switchTab(type) {
             const tabLogin = document.getElementById('tab-login');
@@ -196,7 +758,18 @@
                         setTimeout(() => switchTab('login'), 1000);
                     } else {
                         // Limpiar formulario de login
+                        const activeUser = data.usuario || bodyData.usuario;
                         document.getElementById('form-login').reset();
+                        // Guardar sesión en sessionStorage
+                        sessionStorage.setItem('foodexpress_user', JSON.stringify({
+                            usuario: activeUser,
+                            token: data.token
+                        }));
+                        // Transición hacia la pantalla de menú
+                        setTimeout(() => {
+                            showMenuScreen(activeUser);
+                            showToast(`¡Bienvenido a FoodExpress, ${activeUser}!`, "success");
+                        }, 700);
                     }
                 } else {
                     // Si hay un error (ej. error en la autenticación, 401, 400)
