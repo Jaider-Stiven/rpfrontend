@@ -721,12 +721,12 @@
             if (type === 'login') {
                 const usuarioVal = document.getElementById('login-username').value;
                 const contrasenaVal = document.getElementById('login-password').value;
-                url = 'http://localhost:3000/api/login';
+                url = 'https://foodexpress-1ute.onrender.com/api/login';
                 bodyData = { usuario: usuarioVal, contraseña: contrasenaVal };
             } else {
                 const usuarioVal = document.getElementById('register-username').value;
                 const contrasenaVal = document.getElementById('register-password').value;
-                url = 'http://localhost:3000/api/register';
+                url = 'https://foodexpress-1ute.onrender.com/api/register';
                 bodyData = { usuario: usuarioVal, contraseña: contrasenaVal };
             }
 
