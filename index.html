@@ -792,39 +792,42 @@
         async function showKitchenPanel(username, token) {
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('menu-view').classList.remove('active-view');
-            document.body.classList.remove('in-menu');
+            document.body.classList.add('in-menu');
 
             let panelDiv = document.getElementById('kitchen-panel');
             if (!panelDiv) {
                 panelDiv = document.createElement('div');
                 panelDiv.id = 'kitchen-panel';
-                panelDiv.style.cssText = 'min-height:100vh;background:#0d1117;color:#e6edf3;font-family:Outfit,sans-serif;padding:0;';
                 document.body.appendChild(panelDiv);
             }
+            panelDiv.style.cssText = 'position:relative;z-index:10;width:100%;min-height:100vh;background:#0d1117;color:#f0f6fc;font-family:Outfit,sans-serif;padding:0;';
             panelDiv.style.display = 'block';
             panelDiv.innerHTML = `
-                <header style="background:#161b22;border-bottom:1px solid #30363d;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;">
+                <header style="background:#161b22;border-bottom:1px solid #30363d;padding:18px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
                     <div style="display:flex;align-items:center;gap:12px;">
-                        <i class="fa-solid fa-fire-flame-curved" style="color:#e94560;font-size:1.5rem;"></i>
-                        <h2 style="margin:0;color:#fff;">FoodExpress <span style="color:#e94560;">/ Panel de Cocina</span></h2>
+                        <i class="fa-solid fa-fire-flame-curved" style="color:#e94560;font-size:1.6rem;"></i>
+                        <h2 style="margin:0;color:#ffffff;font-size:1.4rem;">Food<span style="color:#e94560;">Express</span> <span style="color:#8b949e;font-weight:400;font-size:1.1rem;">/ Panel Operativo de Cocina</span></h2>
                     </div>
                     <div style="display:flex;align-items:center;gap:16px;">
-                        <span style="background:#1f6feb22;border:1px solid #1f6feb;color:#58a6ff;padding:4px 12px;border-radius:999px;font-size:0.8rem;">
-                            <i class="fa-solid fa-utensils"></i> ${username} · cocina
+                        <span style="background:rgba(31,111,235,0.15);border:1px solid #388bfd;color:#58a6ff;padding:6px 14px;border-radius:999px;font-size:0.85rem;font-weight:600;">
+                            <i class="fa-solid fa-utensils"></i> ${username} (cocina)
                         </span>
-                        <button onclick="logoutKitchen()" style="background:#e94560;border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.85rem;">
+                        <button onclick="logoutKitchen()" style="background:#e94560;border:none;color:#ffffff;padding:8px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.88rem;display:flex;align-items:center;gap:6px;">
                             <i class="fa-solid fa-right-from-bracket"></i> Salir
                         </button>
                     </div>
                 </header>
-                <main style="max-width:1100px;margin:0 auto;padding:32px 16px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-                        <h3 style="margin:0;">Comandas Activas</h3>
-                        <button onclick="cargarPedidos()" style="background:#238636;border:none;color:#fff;padding:8px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;">
+                <main style="max-width:1200px;margin:0 auto;padding:36px 20px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+                        <div>
+                            <h3 style="margin:0;font-size:1.5rem;color:#ffffff;">Comandas en Tiempo Real</h3>
+                            <p style="margin:4px 0 0;color:#8b949e;font-size:0.9rem;">Gestiona y despacha los pedidos entrantes del restaurante</p>
+                        </div>
+                        <button onclick="cargarPedidos()" style="background:#238636;border:none;color:#ffffff;padding:10px 20px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.9rem;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(35,134,54,0.3);">
                             <i class="fa-solid fa-rotate-right"></i> Actualizar
                         </button>
                     </div>
-                    <div id="kitchen-orders" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
+                    <div id="kitchen-orders" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px;">
                         <p style="color:#8b949e;">Cargando comandas...</p>
                     </div>
                 </main>`;
@@ -842,30 +845,62 @@
                 });
                 const pedidos = await res.json();
                 if (!Array.isArray(pedidos) || pedidos.length === 0) {
-                    grid.innerHTML = `<p style="color:#8b949e;grid-column:1/-1;text-align:center;padding:40px;">
-                        <i class="fa-solid fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px;"></i>No hay comandas activas aún.</p>`;
+                    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;background:#161b22;border:1px dashed #30363d;border-radius:12px;">
+                        <i class="fa-solid fa-inbox" style="font-size:2.5rem;color:#484f58;display:block;margin-bottom:12px;"></i>
+                        <h4 style="margin:0 0 6px;color:#c9d1d9;">No hay comandas activas</h4>
+                        <p style="margin:0;color:#8b949e;font-size:0.9rem;">Los nuevos pedidos de los clientes aparecerán aquí automáticamente.</p>
+                    </div>`;
                     return;
                 }
-                const color = { Pendiente:'#e3b341', Cocinando:'#1f6feb', Enviado:'#3fb950', Entregado:'#8b949e' };
+                const badgeStyle = {
+                    Pendiente: 'background:rgba(210,153,34,0.15);border:1px solid #d29922;color:#e3b341;',
+                    Cocinando: 'background:rgba(56,139,253,0.15);border:1px solid #388bfd;color:#58a6ff;',
+                    Enviado: 'background:rgba(46,160,67,0.15);border:1px solid #3fb950;color:#3fb950;',
+                    Entregado: 'background:rgba(110,118,129,0.15);border:1px solid #6e7681;color:#8b949e;'
+                };
                 grid.innerHTML = pedidos.map(p => `
-                    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;">
-                        <div style="background:#21262d;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+                    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.25);display:flex;flex-direction:column;">
+                        <div style="background:#21262d;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #30363d;">
                             <div>
-                                <strong style="color:#e6edf3;">#FE-${p.id}</strong>
-                                <span style="color:#8b949e;font-size:0.78rem;display:block;">${new Date(p.fecha_creacion).toLocaleString('es-CO')}</span>
+                                <strong style="color:#ffffff;font-size:1.1rem;letter-spacing:0.5px;">#FE-${p.id}</strong>
+                                <span style="color:#8b949e;font-size:0.8rem;display:block;margin-top:2px;">
+                                    <i class="fa-regular fa-clock"></i> ${new Date(p.fecha_creacion).toLocaleString('es-CO')}
+                                </span>
                             </div>
-                            <span style="background:${color[p.estado]||'#555'}22;border:1px solid ${color[p.estado]||'#555'};color:${color[p.estado]||'#ccc'};padding:3px 10px;border-radius:999px;font-size:0.78rem;">${p.estado}</span>
+                            <span style="${badgeStyle[p.estado] || ''}padding:4px 12px;border-radius:999px;font-size:0.82rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">
+                                ${p.estado}
+                            </span>
                         </div>
-                        <div style="padding:14px 18px;">
-                            <p style="color:#8b949e;margin:0 0 8px;font-size:0.82rem;"><i class="fa-solid fa-user"></i> ${p.cliente_nombre} &nbsp;·&nbsp; <strong style="color:#e94560;">$${Number(p.total).toLocaleString('es-CO')}</strong></p>
-                            <ul style="margin:0 0 14px;padding-left:18px;color:#e6edf3;font-size:0.88rem;">
-                                ${(p.items||[]).map(it=>`<li>${it.cantidad}× ${it.nombre}</li>`).join('')}
-                            </ul>
-                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                                ${p.estado==='Pendiente'?`<button onclick="cambiarEstado(${p.id},'Cocinando')" style="flex:1;background:#1f6feb;border:none;color:#fff;padding:8px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;"><i class="fa-solid fa-fire"></i> Iniciar Preparación</button>`:''}
-                                ${p.estado==='Cocinando'?`<button onclick="cambiarEstado(${p.id},'Enviado')" style="flex:1;background:#3fb950;border:none;color:#fff;padding:8px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;"><i class="fa-solid fa-paper-plane"></i> Despachar</button>`:''}
-                                ${p.estado==='Enviado'?`<button onclick="cambiarEstado(${p.id},'Entregado')" style="flex:1;background:#8b949e;border:none;color:#fff;padding:8px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;"><i class="fa-solid fa-check"></i> Marcar Entregado</button>`:''}
-                                ${p.estado==='Entregado'?`<span style="color:#8b949e;font-size:0.82rem;">✔ Completado</span>`:''}
+                        <div style="padding:18px;flex:1;display:flex;flex-direction:column;justify-content:space-between;">
+                            <div>
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #21262d;">
+                                    <span style="color:#c9d1d9;font-size:0.9rem;"><i class="fa-solid fa-user" style="color:#8b949e;margin-right:6px;"></i> ${p.cliente_nombre}</span>
+                                    <strong style="color:#e94560;font-size:1.05rem;">$${Number(p.total).toLocaleString('es-CO')}</strong>
+                                </div>
+                                <div style="margin-bottom:16px;">
+                                    <span style="font-size:0.8rem;color:#8b949e;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Detalle del Pedido:</span>
+                                    <ul style="margin:8px 0 0;padding-left:20px;color:#f0f6fc;font-size:0.92rem;line-height:1.6;">
+                                        ${(p.items || []).map(it => `<li><strong>${it.cantidad}x</strong> ${it.nombre}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:10px;margin-top:12px;">
+                                ${p.estado === 'Pendiente' ? `
+                                <button onclick="cambiarEstado(${p.id},'Cocinando')" style="flex:1;background:#1f6feb;border:none;color:#ffffff;padding:10px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:6px;">
+                                    <i class="fa-solid fa-fire"></i> Iniciar Preparación
+                                </button>` : ''}
+                                ${p.estado === 'Cocinando' ? `
+                                <button onclick="cambiarEstado(${p.id},'Enviado')" style="flex:1;background:#238636;border:none;color:#ffffff;padding:10px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:6px;">
+                                    <i class="fa-solid fa-paper-plane"></i> Despachar
+                                </button>` : ''}
+                                ${p.estado === 'Enviado' ? `
+                                <button onclick="cambiarEstado(${p.id},'Entregado')" style="flex:1;background:#30363d;border:1px solid #8b949e;color:#f0f6fc;padding:10px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.9rem;display:flex;align-items:center;justify-content:center;gap:6px;">
+                                    <i class="fa-solid fa-check"></i> Marcar Entregado
+                                </button>` : ''}
+                                ${p.estado === 'Entregado' ? `
+                                <div style="flex:1;background:rgba(46,160,67,0.1);border:1px solid #238636;color:#3fb950;padding:10px;border-radius:8px;text-align:center;font-size:0.85rem;font-weight:600;">
+                                    <i class="fa-solid fa-circle-check"></i> Pedido Entregado
+                                </div>` : ''}
                             </div>
                         </div>
                     </div>`).join('');
