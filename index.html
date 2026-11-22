@@ -258,14 +258,12 @@
     <script>
         // ==========================================
         // CONFIGURACIÓN DE LA API
-        // En Docker, Nginx sirve este sitio y redirige /api al backend,
-        // por eso se usa la misma origen (API_BASE vacío).
-        // Si abres el HTML con file:// o con Live Server (puerto 5500),
-        // se usa el backend público de Render.
+        // Si está en Netlify o abierto localmente, apunta a Render.
+        // En Docker local con Nginx proxy reverso, usa el mismo origen.
         // ==========================================
-        const API_BASE = (location.protocol === 'file:' || location.port === '5500')
-            ? 'https://foodexpress-1ute.onrender.com'
-            : '';
+        const API_BASE = (location.hostname === 'localhost' && (location.port === '' || location.port === '80'))
+            ? ''
+            : 'https://foodexpress-1ute.onrender.com';
 
         // ==========================================
         // CATÁLOGO DE PRODUCTOS GASTRONÓMICOS FOODEXPRESS
