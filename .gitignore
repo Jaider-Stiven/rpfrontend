@@ -1,4 +1,47 @@
-# System files
+# Node
+node_modules/
+dist/
+dist-ssr/
+
+# Environment variables
+.env
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
 .DS_Store
 Thumbs.db
-.gitignore
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+
+# Build artifacts
+build/
+coverage/
+
+# Project specific
+.angular/
+
+# Other
+.cursor/
+
+#enlace
+.enlace_repositorio.txt/

@@ -211,7 +211,7 @@
                 <span>Total a Pagar:</span>
                 <span id="cart-total">$0</span>
             </div>
-            <button class="checkout-btn" id="btn-checkout" onclick="openOrderModal()" disabled>
+            <button class="checkout-btn" id="btn-checkout" onclick="confirmarPedidoReal()" disabled>
                 <span>Confirmar Pedido</span>
                 <i class="fa-solid fa-arrow-right"></i>
             </button>
@@ -256,6 +256,17 @@
     <div id="toast-container"></div>
 
     <script>
+        // ==========================================
+        // CONFIGURACIÓN DE LA API
+        // En Docker, Nginx sirve este sitio y redirige /api al backend,
+        // por eso se usa la misma origen (API_BASE vacío).
+        // Si abres el HTML con file:// o con Live Server (puerto 5500),
+        // se usa el backend público de Render.
+        // ==========================================
+        const API_BASE = (location.protocol === 'file:' || location.port === '5500')
+            ? 'https://foodexpress-1ute.onrender.com'
+            : '';
+
         // ==========================================
         // CATÁLOGO DE PRODUCTOS GASTRONÓMICOS FOODEXPRESS
         // ==========================================
@@ -368,23 +379,26 @@
         let shoppingCart = [];
 
         // ==========================================
-        // MANEJO DE VISTAS (LOGIN / MENÚ)
+        // MANEJO DE VISTAS (LOGIN / MENÚ / COCINA)
         // ==========================================
         window.addEventListener('DOMContentLoaded', () => {
-            // Verificar si el usuario ya tiene sesión iniciada
             const savedSession = sessionStorage.getItem('foodexpress_user');
             if (savedSession) {
                 try {
                     const parsed = JSON.parse(savedSession);
                     if (parsed && parsed.usuario) {
-                        showMenuScreen(parsed.usuario);
+                        const rol = parsed.rol || 'cliente';
+                        if (rol === 'cocina' || rol === 'admin') {
+                            showKitchenPanel(parsed.usuario, parsed.token);
+                        } else {
+                            showMenuScreen(parsed.usuario);
+                        }
                         return;
                     }
                 } catch (e) {
                     sessionStorage.removeItem('foodexpress_user');
                 }
             }
-            // Si no hay sesión, asegurar vista login
             showAuthScreen();
         });
 
@@ -392,6 +406,8 @@
             document.body.classList.remove('in-menu');
             document.getElementById('auth-container').classList.remove('hidden');
             document.getElementById('menu-view').classList.remove('active-view');
+            const kp = document.getElementById('kitchen-panel');
+            if (kp) kp.style.display = 'none';
         }
 
         function showMenuScreen(username) {
@@ -623,24 +639,18 @@
         // ==========================================
         // PROCESO DE CHECKOUT / PEDIDO CONFIRMADO
         // ==========================================
-        function openOrderModal() {
-            if (shoppingCart.length === 0) return;
-
+        function openOrderModal(realId) {
             const currentUser = document.getElementById('logged-username').innerText;
             const currentTotal = document.getElementById('cart-total').innerText;
-            const randomId = Math.floor(1000 + Math.random() * 9000);
+            const displayId = realId || Math.floor(1000 + Math.random() * 9000);
 
-            document.getElementById('modal-order-id').innerText = `#FE-${randomId}`;
+            document.getElementById('modal-order-id').innerText = `#FE-${displayId}`;
             document.getElementById('modal-order-user').innerText = currentUser;
             document.getElementById('modal-order-total').innerText = currentTotal;
 
             // Cerrar drawer y abrir modal
             toggleCartDrawer(false);
             document.getElementById('order-modal-backdrop').classList.add('open');
-
-            // Vaciar carrito
-            shoppingCart = [];
-            updateCartUI();
         }
 
         function closeOrderModal() {
@@ -721,17 +731,16 @@
             if (type === 'login') {
                 const usuarioVal = document.getElementById('login-username').value;
                 const contrasenaVal = document.getElementById('login-password').value;
-                url = 'https://foodexpress-1ute.onrender.com/api/login';
+                url = `${API_BASE}/api/login`;
                 bodyData = { usuario: usuarioVal, contraseña: contrasenaVal };
             } else {
                 const usuarioVal = document.getElementById('register-username').value;
                 const contrasenaVal = document.getElementById('register-password').value;
-                url = 'https://foodexpress-1ute.onrender.com/api/register';
+                url = `${API_BASE}/api/register`;
                 bodyData = { usuario: usuarioVal, contraseña: contrasenaVal };
             }
 
             try {
-                // Deshabilitar botón durante la carga
                 const submitBtn = event.target.querySelector('.submit-btn');
                 const originalText = submitBtn.innerHTML;
                 submitBtn.disabled = true;
@@ -739,9 +748,7 @@
 
                 const response = await fetch(url, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bodyData)
                 });
 
@@ -750,34 +757,176 @@
                 submitBtn.innerHTML = originalText;
 
                 if (response.ok) {
-                    // Si todo es satisfactorio (código 200 o 201)
                     showToast(data.mensaje || "Operación exitosa", "success");
                     if (type === 'register') {
-                        // Limpiar formulario y cambiar a login para que inicie sesión
                         document.getElementById('form-register').reset();
                         setTimeout(() => switchTab('login'), 1000);
                     } else {
-                        // Limpiar formulario de login
                         const activeUser = data.usuario || bodyData.usuario;
+                        const rol = data.rol || 'cliente';
                         document.getElementById('form-login').reset();
-                        // Guardar sesión en sessionStorage
                         sessionStorage.setItem('foodexpress_user', JSON.stringify({
                             usuario: activeUser,
-                            token: data.token
+                            token: data.token,
+                            rol: rol
                         }));
-                        // Transición hacia la pantalla de menú
                         setTimeout(() => {
-                            showMenuScreen(activeUser);
-                            showToast(`¡Bienvenido a FoodExpress, ${activeUser}!`, "success");
+                            if (rol === 'cocina' || rol === 'admin') {
+                                showKitchenPanel(activeUser, data.token);
+                            } else {
+                                showMenuScreen(activeUser);
+                            }
+                            showToast(`¡Bienvenido a FoodExpress, ${activeUser}! [${rol}]`, "success");
                         }, 700);
                     }
                 } else {
-                    // Si hay un error (ej. error en la autenticación, 401, 400)
                     showToast(data.error || "Error inesperado", "error");
                 }
             } catch (err) {
                 showToast("No se pudo conectar con el servidor de FoodExpress", "error");
                 console.error(err);
+            }
+        }
+
+        // ==========================================
+        // PANEL DE COCINA
+        // ==========================================
+        async function showKitchenPanel(username, token) {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('menu-view').classList.remove('active-view');
+            document.body.classList.remove('in-menu');
+
+            let panelDiv = document.getElementById('kitchen-panel');
+            if (!panelDiv) {
+                panelDiv = document.createElement('div');
+                panelDiv.id = 'kitchen-panel';
+                panelDiv.style.cssText = 'min-height:100vh;background:#0d1117;color:#e6edf3;font-family:Outfit,sans-serif;padding:0;';
+                document.body.appendChild(panelDiv);
+            }
+            panelDiv.style.display = 'block';
+            panelDiv.innerHTML = `
+                <header style="background:#161b22;border-bottom:1px solid #30363d;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <i class="fa-solid fa-fire-flame-curved" style="color:#e94560;font-size:1.5rem;"></i>
+                        <h2 style="margin:0;color:#fff;">FoodExpress <span style="color:#e94560;">/ Panel de Cocina</span></h2>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:16px;">
+                        <span style="background:#1f6feb22;border:1px solid #1f6feb;color:#58a6ff;padding:4px 12px;border-radius:999px;font-size:0.8rem;">
+                            <i class="fa-solid fa-utensils"></i> ${username} · cocina
+                        </span>
+                        <button onclick="logoutKitchen()" style="background:#e94560;border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.85rem;">
+                            <i class="fa-solid fa-right-from-bracket"></i> Salir
+                        </button>
+                    </div>
+                </header>
+                <main style="max-width:1100px;margin:0 auto;padding:32px 16px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+                        <h3 style="margin:0;">Comandas Activas</h3>
+                        <button onclick="cargarPedidos()" style="background:#238636;border:none;color:#fff;padding:8px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;">
+                            <i class="fa-solid fa-rotate-right"></i> Actualizar
+                        </button>
+                    </div>
+                    <div id="kitchen-orders" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
+                        <p style="color:#8b949e;">Cargando comandas...</p>
+                    </div>
+                </main>`;
+            await cargarPedidos();
+        }
+
+        async function cargarPedidos() {
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            const grid = document.getElementById('kitchen-orders');
+            if (!grid) return;
+            grid.innerHTML = '<p style="color:#8b949e;">Cargando...</p>';
+            try {
+                const res = await fetch(`${API_BASE}/api/pedidos`, {
+                    headers: { 'Authorization': `Bearer ${session.token}` }
+                });
+                const pedidos = await res.json();
+                if (!Array.isArray(pedidos) || pedidos.length === 0) {
+                    grid.innerHTML = `<p style="color:#8b949e;grid-column:1/-1;text-align:center;padding:40px;">
+                        <i class="fa-solid fa-inbox" style="font-size:2rem;display:block;margin-bottom:12px;"></i>No hay comandas activas aún.</p>`;
+                    return;
+                }
+                const color = { Pendiente:'#e3b341', Cocinando:'#1f6feb', Enviado:'#3fb950', Entregado:'#8b949e' };
+                grid.innerHTML = pedidos.map(p => `
+                    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;">
+                        <div style="background:#21262d;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <strong style="color:#e6edf3;">#FE-${p.id}</strong>
+                                <span style="color:#8b949e;font-size:0.78rem;display:block;">${new Date(p.fecha_creacion).toLocaleString('es-CO')}</span>
+                            </div>
+                            <span style="background:${color[p.estado]||'#555'}22;border:1px solid ${color[p.estado]||'#555'};color:${color[p.estado]||'#ccc'};padding:3px 10px;border-radius:999px;font-size:0.78rem;">${p.estado}</span>
+                        </div>
+                        <div style="padding:14px 18px;">
+                            <p style="color:#8b949e;margin:0 0 8px;font-size:0.82rem;"><i class="fa-solid fa-user"></i> ${p.cliente_nombre} &nbsp;·&nbsp; <strong style="color:#e94560;">$${Number(p.total).toLocaleString('es-CO')}</strong></p>
+                            <ul style="margin:0 0 14px;padding-left:18px;color:#e6edf3;font-size:0.88rem;">
+                                ${(p.items||[]).map(it=>`<li>${it.cantidad}× ${it.nombre}</li>`).join('')}
+                            </ul>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                ${p.estado==='Pendiente'?`<button onclick="cambiarEstado(${p.id},'Cocinando')" style="flex:1;background:#1f6feb;border:none;color:#fff;padding:8px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;"><i class="fa-solid fa-fire"></i> Iniciar Preparación</button>`:''}
+                                ${p.estado==='Cocinando'?`<button onclick="cambiarEstado(${p.id},'Enviado')" style="flex:1;background:#3fb950;border:none;color:#fff;padding:8px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;"><i class="fa-solid fa-paper-plane"></i> Despachar</button>`:''}
+                                ${p.estado==='Enviado'?`<button onclick="cambiarEstado(${p.id},'Entregado')" style="flex:1;background:#8b949e;border:none;color:#fff;padding:8px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;"><i class="fa-solid fa-check"></i> Marcar Entregado</button>`:''}
+                                ${p.estado==='Entregado'?`<span style="color:#8b949e;font-size:0.82rem;">✔ Completado</span>`:''}
+                            </div>
+                        </div>
+                    </div>`).join('');
+            } catch (err) {
+                grid.innerHTML = `<p style="color:#e94560;">Error: ${err.message}</p>`;
+            }
+        }
+
+        async function cambiarEstado(pedidoId, nuevoEstado) {
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            try {
+                const res = await fetch(`${API_BASE}/api/pedidos/${pedidoId}/estado`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.token}` },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Pedido #FE-${pedidoId} → ${nuevoEstado}`, "success");
+                    await cargarPedidos();
+                } else {
+                    showToast(data.error || "Error al cambiar estado", "error");
+                }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+            }
+        }
+
+        function logoutKitchen() {
+            sessionStorage.removeItem('foodexpress_user');
+            const panel = document.getElementById('kitchen-panel');
+            if (panel) panel.style.display = 'none';
+            showAuthScreen();
+            showToast("Sesión de cocina cerrada.", "info");
+        }
+
+        // ==========================================
+        // CONFIRMAR PEDIDO REAL DESDE EL CARRITO
+        // ==========================================
+        async function confirmarPedidoReal() {
+            if (shoppingCart.length === 0) return;
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            const items = shoppingCart.map(i => ({ nombre: i.name, precio: i.price, cantidad: i.qty }));
+            try {
+                const res = await fetch(`${API_BASE}/api/pedidos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.token}` },
+                    body: JSON.stringify({ items })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    openOrderModal(data.pedidoId);
+                    shoppingCart = [];
+                    updateCartUI();
+                } else {
+                    showToast(data.error || "Error al crear pedido", "error");
+                }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
             }
         }
     </script>
