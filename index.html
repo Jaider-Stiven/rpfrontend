@@ -87,136 +87,237 @@
         </div>
     </div>
 
-    <!-- VISTA 2: Pantalla de Menú Gastronómico (Se activa al iniciar sesión) -->
-    <div id="menu-view">
-        <!-- Barra de Navegación Superior -->
-        <header class="menu-navbar">
-            <div class="navbar-content">
-                <div class="navbar-brand" onclick="scrollToTop()">
-                    <i class="fa-solid fa-fire-flame-curved logo-icon"></i>
-                    <h2>Food<span>Express</span></h2>
+    <!-- VISTA 2: Pantalla de Menú Gastronómico Estilo Kiosko (Se activa al iniciar sesión) -->
+    <div id="menu-view" class="kiosk-light">
+        <div class="kiosk-shell">
+            <!-- COLUMNA IZQUIERDA: Navegación y Categorías -->
+            <aside class="kiosk-sidebar">
+                <div class="kiosk-brand" onclick="scrollToTop()">
+                    <div class="kiosk-brand-icon">
+                        <i class="fa-solid fa-fire-flame-curved"></i>
+                    </div>
+                    <div>
+                        <h2>Food<span>Express</span></h2>
+                        <small>Sistema Kiosko POS</small>
+                    </div>
                 </div>
 
-                <div class="navbar-actions">
-                    <!-- Badge del Usuario Autenticado -->
-                    <div class="user-badge">
+                <!-- Buscador -->
+                <div class="kiosk-search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="food-search-input" placeholder="Buscar plato o bebida..." oninput="handleSearch(this.value)">
+                </div>
+
+                <!-- Info usuario + Mis Pedidos -->
+                <div class="kiosk-user-card">
+                    <div class="kiosk-user-info">
                         <div class="user-avatar-icon" id="user-avatar-letter">U</div>
-                        <span>Hola, <strong id="logged-username">Usuario</strong></span>
+                        <div>
+                            <span class="kiosk-user-label">Cliente conectado</span>
+                            <strong id="logged-username">Usuario</strong>
+                        </div>
+                    </div>
+                    <div class="kiosk-user-actions">
+                        <button class="kiosk-mini-btn orders-btn" onclick="openMyOrdersModal()" title="Ver mis pedidos">
+                            <i class="fa-solid fa-receipt"></i> Mis Pedidos
+                        </button>
+                        <button class="kiosk-mini-btn logout-mini-btn" onclick="logout()" title="Cerrar sesión">
+                            <i class="fa-solid fa-right-from-bracket"></i> Salir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Categorías Verticales -->
+                <div class="kiosk-cat-label">Categorías del Menú</div>
+                <nav class="kiosk-categories" id="kiosk-categories">
+                    <button class="kiosk-cat-btn active" onclick="filterCategory('all', this)">
+                        <i class="fa-solid fa-border-all"></i>
+                        <span>Todos los Platos</span>
+                    </button>
+                    <button class="kiosk-cat-btn" onclick="filterCategory('hamburguesas', this)">
+                        <i class="fa-solid fa-burger"></i>
+                        <span>Hamburguesas</span>
+                    </button>
+                    <button class="kiosk-cat-btn" onclick="filterCategory('pizzas', this)">
+                        <i class="fa-solid fa-pizza-slice"></i>
+                        <span>Pizzas Artesanales</span>
+                    </button>
+                    <button class="kiosk-cat-btn" onclick="filterCategory('tacos', this)">
+                        <i class="fa-solid fa-hotdog"></i>
+                        <span>Perros & Tex-Mex</span>
+                    </button>
+                    <button class="kiosk-cat-btn" onclick="filterCategory('bebidas', this)">
+                        <i class="fa-solid fa-glass-water"></i>
+                        <span>Bebidas & Vasos</span>
+                    </button>
+                    <button class="kiosk-cat-btn" onclick="filterCategory('postres', this)">
+                        <i class="fa-solid fa-cake-candles"></i>
+                        <span>Postres & Dulces</span>
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- COLUMNA CENTRAL: Catálogo de Productos -->
+            <main class="kiosk-main">
+                <header class="kiosk-topbar">
+                    <div class="kiosk-topbar-left">
+                        <h3 id="current-category-title">Todos los Platos</h3>
+                        <span class="kiosk-count-pill" id="products-count-label">Cargando...</span>
                     </div>
 
-                    <!-- Botón de Carrito con Contador Dinámico -->
-                    <button class="cart-btn" onclick="toggleCartDrawer(true)" id="btn-open-cart" title="Ver pedido">
-                        <i class="fa-solid fa-bag-shopping"></i>
-                        <span>Mi Pedido</span>
-                        <span class="cart-badge" id="cart-counter">0</span>
-                    </button>
-
-                    <!-- Botón Cerrar Sesión -->
-                    <button class="logout-btn" onclick="logout()" title="Cerrar sesión">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        <span>Salir</span>
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Contenido Principal del Menú -->
-        <main class="menu-main">
-            <!-- Hero Banner Gastronómico -->
-            <section class="menu-hero">
-                <div class="hero-text">
-                    <div class="hero-promo-badge">
+                    <div class="kiosk-status-banner">
                         <i class="fa-solid fa-bolt"></i>
-                        <span>Entrega Rápida en 25-35 min • Envíos gratis por compras > $30.000</span>
+                        <span id="hero-username-greeting">Envío gratis desde $30.000 · Entrega 25-35 min</span>
                     </div>
-                    <h1>Elige tu comida favorita, <br><span id="hero-username-greeting">¡y te la llevamos volando!</span></h1>
-                    <p>Sabores artesanales, ingredientes frescos del día y la mejor selección gastronómica para ti.</p>
-                    
-                    <!-- Buscador en tiempo real -->
-                    <div class="search-bar-wrapper">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="food-search-input" placeholder="Buscar hamburguesas, pizzas, postres..." oninput="handleSearch(this.value)">
+
+                    <div class="kiosk-topbar-right">
+                        <button class="kiosk-theme-btn" id="btn-toggle-theme" onclick="toggleKioskTheme()" title="Cambiar tema claro/oscuro">
+                            <i class="fa-solid fa-moon"></i>
+                        </button>
+                        <button class="kiosk-mobile-cart-btn" onclick="toggleCartDrawer(true)" id="btn-open-cart">
+                            <i class="fa-solid fa-bag-shopping"></i>
+                            <span>Pedido</span>
+                            <span class="cart-badge" id="cart-counter">0</span>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Categorías rápidas en móvil -->
+                <div class="kiosk-mobile-cats" id="kiosk-mobile-cats">
+                    <button class="category-pill active" onclick="filterCategory('all', this)">Todos</button>
+                    <button class="category-pill" onclick="filterCategory('hamburguesas', this)">Hamburguesas</button>
+                    <button class="category-pill" onclick="filterCategory('pizzas', this)">Pizzas</button>
+                    <button class="category-pill" onclick="filterCategory('tacos', this)">Perros & Tex-Mex</button>
+                    <button class="category-pill" onclick="filterCategory('bebidas', this)">Bebidas</button>
+                    <button class="category-pill" onclick="filterCategory('postres', this)">Postres</button>
+                </div>
+
+                <!-- Grid de productos estilo Kiosko -->
+                <div class="kiosk-products-grid" id="products-grid">
+                    <!-- Renderizado dinámicamente -->
+                </div>
+            </main>
+
+            <!-- COLUMNA DERECHA: Carrito Persistente / Drawer Móvil -->
+            <div class="cart-drawer-overlay" id="cart-drawer-overlay" onclick="toggleCartDrawer(false)"></div>
+            <aside class="kiosk-cart-panel" id="cart-drawer">
+                <div class="kiosk-cart-header">
+                    <div class="kiosk-cart-title">
+                        <i class="fa-solid fa-bag-shopping"></i>
+                        <div>
+                            <h3>Tu Pedido</h3>
+                            <span id="cart-header-count">0 ítems</span>
+                        </div>
+                    </div>
+                    <div class="kiosk-cart-header-actions">
+                        <button class="kiosk-clear-btn" onclick="clearCart()" title="Vaciar carrito">
+                            <i class="fa-solid fa-trash-can"></i> Vaciar
+                        </button>
+                        <button class="close-drawer-btn mobile-only-close" onclick="toggleCartDrawer(false)">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 </div>
-            </section>
 
-            <!-- Filtros por Categoría -->
-            <section class="categories-section">
-                <h3 class="categories-section-title">
-                    <i class="fa-solid fa-utensils" style="color: var(--primary);"></i>
-                    Explora por Categorías
-                </h3>
-                <div class="categories-pills">
-                    <button class="category-pill active" onclick="filterCategory('all', this)">
-                        <i class="fa-solid fa-border-all"></i> Todos los Platos
-                    </button>
-                    <button class="category-pill" onclick="filterCategory('hamburguesas', this)">
-                        <i class="fa-solid fa-burger"></i> Hamburguesas
-                    </button>
-                    <button class="category-pill" onclick="filterCategory('pizzas', this)">
-                        <i class="fa-solid fa-pizza-slice"></i> Pizzas
-                    </button>
-                    <button class="category-pill" onclick="filterCategory('tacos', this)">
-                        <i class="fa-solid fa-bowl-food"></i> Tacos & Tex-Mex
-                    </button>
-                    <button class="category-pill" onclick="filterCategory('bebidas', this)">
-                        <i class="fa-solid fa-wine-glass"></i> Bebidas
-                    </button>
-                    <button class="category-pill" onclick="filterCategory('postres', this)">
-                        <i class="fa-solid fa-cake-candles"></i> Postres
-                    </button>
+                <div class="cart-items-container" id="cart-items-container">
+                    <!-- Items renderizados con JS -->
                 </div>
-            </section>
 
-            <!-- Catálogo de Platos del Menú -->
-            <section class="products-section">
-                <div class="products-header">
-                    <h3 id="current-category-title">Platos Destacados</h3>
-                    <span class="products-count" id="products-count-label">Cargando menú...</span>
+                <div class="kiosk-cart-footer">
+                    <div class="cart-summary-row">
+                        <span>Subtotal:</span>
+                        <span id="cart-subtotal">$ 0</span>
+                    </div>
+                    <div class="cart-summary-row">
+                        <span>Costo de Envío:</span>
+                        <span id="cart-shipping">$ 0</span>
+                    </div>
+                    <div class="cart-summary-row total-row">
+                        <span>Total a Pagar:</span>
+                        <span id="cart-total">$ 0</span>
+                    </div>
+                    <button class="kiosk-checkout-btn" id="btn-checkout" onclick="confirmarPedidoReal()" disabled>
+                        <span>Confirmar Pedido</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
                 </div>
-                <div class="products-grid" id="products-grid">
-                    <!-- Se renderiza dinámicamente con JavaScript -->
-                </div>
-            </section>
-        </main>
+            </aside>
+        </div>
     </div>
 
-    <!-- DRAWER LATERAL DE CARRITO DE COMPRAS -->
-    <div class="cart-drawer-overlay" id="cart-drawer-overlay" onclick="toggleCartDrawer(false)"></div>
-    <aside class="cart-drawer" id="cart-drawer">
-        <div class="cart-drawer-header">
-            <h3>
-                <i class="fa-solid fa-bag-shopping" style="color: var(--primary);"></i>
-                Tu Pedido FoodExpress
-            </h3>
-            <button class="close-drawer-btn" onclick="toggleCartDrawer(false)">
+    <!-- MODAL DE PERSONALIZACIÓN DE PRODUCTO (ESTILO KIOSKO) -->
+    <div class="custom-modal-backdrop" id="custom-modal-backdrop" onclick="if(event.target===this) closeProductModal()">
+        <div class="custom-modal-card">
+            <button class="custom-modal-close" onclick="closeProductModal()" title="Cerrar">
                 <i class="fa-solid fa-xmark"></i>
             </button>
-        </div>
 
-        <div class="cart-items-container" id="cart-items-container">
-            <!-- Items del carrito renderizados con JS -->
-        </div>
+            <div class="custom-modal-body">
+                <!-- Columna Izquierda: Imagen -->
+                <div class="custom-modal-left">
+                    <div class="custom-modal-img-box">
+                        <img id="cm-image" src="" alt="Producto">
+                        <span class="custom-modal-badge" id="cm-badge"></span>
+                    </div>
+                    <p class="custom-modal-disclaimer">
+                        <i class="fa-solid fa-circle-info"></i> La imagen es ilustrativa y puede variar ligeramente del producto final.
+                    </p>
+                </div>
 
-        <div class="cart-drawer-footer">
-            <div class="cart-summary-row">
-                <span>Subtotal:</span>
-                <span id="cart-subtotal">$0</span>
+                <!-- Columna Derecha: Info y Opciones -->
+                <div class="custom-modal-right">
+                    <div class="custom-modal-header-info">
+                        <h3 id="cm-title">Nombre del Producto</h3>
+                        <p id="cm-desc">Descripción del producto</p>
+                        <div class="custom-modal-base-price" id="cm-base-price">$0 ~</div>
+                    </div>
+
+                    <div class="custom-modal-options-scroll" id="cm-options-container">
+                        <!-- Grupos de opciones dinámicas -->
+                    </div>
+                </div>
             </div>
-            <div class="cart-summary-row">
-                <span>Costo de Envío:</span>
-                <span id="cart-shipping">$0</span>
+
+            <!-- Barra Inferior del Modal -->
+            <div class="custom-modal-footer">
+                <div class="custom-modal-qty">
+                    <span>Cantidad</span>
+                    <div class="custom-qty-controls">
+                        <button type="button" onclick="changeModalQty(-1)">−</button>
+                        <strong id="cm-qty">1</strong>
+                        <button type="button" onclick="changeModalQty(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="custom-modal-actions">
+                    <button type="button" class="cm-btn-add" id="cm-btn-add" onclick="confirmAddFromModal()">
+                        Agregar ($0)
+                    </button>
+                    <button type="button" class="cm-btn-cancel" onclick="closeProductModal()">
+                        Cancelar
+                    </button>
+                </div>
             </div>
-            <div class="cart-summary-row total-row">
-                <span>Total a Pagar:</span>
-                <span id="cart-total">$0</span>
+        </div>
+    </div>
+
+    <!-- MODAL DE MIS PEDIDOS (SEGUIMIENTO EN VIVO PARA CLIENTE) -->
+    <div class="order-modal-backdrop" id="my-orders-modal-backdrop" onclick="if(event.target===this) closeMyOrdersModal()">
+        <div class="order-modal-card my-orders-card">
+            <div class="my-orders-header">
+                <h3><i class="fa-solid fa-receipt"></i> Mis Pedidos en Tiempo Real</h3>
+                <button class="custom-modal-close static-close" onclick="closeMyOrdersModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
-            <button class="checkout-btn" id="btn-checkout" onclick="confirmarPedidoReal()" disabled>
-                <span>Confirmar Pedido</span>
-                <i class="fa-solid fa-arrow-right"></i>
+            <div class="my-orders-list" id="my-orders-list">
+                <p>Cargando pedidos...</p>
+            </div>
+            <button class="order-modal-btn" style="margin-top:16px;" onclick="loadMyOrders()">
+                <i class="fa-solid fa-rotate-right"></i> Actualizar Estados
             </button>
         </div>
-    </aside>
+    </div>
 
     <!-- MODAL DE PEDIDO CONFIRMADO -->
     <div class="order-modal-backdrop" id="order-modal-backdrop">
@@ -266,6 +367,146 @@
             : 'https://foodexpress-1ute.onrender.com';
 
         // ==========================================
+        // GRUPOS DE OPCIONES ESTILO KIOSKO POR CATEGORÍA
+        // ==========================================
+        const OPTION_GROUPS_BY_CATEGORY = {
+            hamburguesas: [
+                {
+                    id: 'tamano',
+                    title: 'Presentación / Combo',
+                    required: true,
+                    type: 'radio',
+                    options: [
+                        { id: 'sencilla', label: 'Hamburguesa Sencilla', price: 0, default: true },
+                        { id: 'papas', label: 'Combo con Papas Rústicas', price: 5500 },
+                        { id: 'combo_full', label: 'Combo Papas + Gaseosa 400ml', price: 8500 }
+                    ]
+                },
+                {
+                    id: 'salsas',
+                    title: 'Salsas y Adiciones',
+                    required: false,
+                    type: 'checkbox',
+                    max: 3,
+                    options: [
+                        { id: 'sin_extra', label: 'Sin adiciones extra', price: 0, default: true },
+                        { id: 'bbq', label: 'Salsa BBQ Ahumada', price: 1000 },
+                        { id: 'ajo', label: 'Salsa Ajo & Cilantro', price: 1000 },
+                        { id: 'picante', label: 'Mayonesa Chipotle Picante', price: 1200 },
+                        { id: 'cheddar', label: 'Extra Queso Cheddar Fundido', price: 2500 },
+                        { id: 'bacon', label: 'Extra Tocineta Crujiente', price: 3500 }
+                    ]
+                }
+            ],
+            pizzas: [
+                {
+                    id: 'tamano',
+                    title: 'Tamaño de Pizza',
+                    required: true,
+                    type: 'radio',
+                    options: [
+                        { id: 'personal', label: 'Personal (4 porciones)', price: 0, default: true },
+                        { id: 'mediana', label: 'Mediana (6 porciones)', price: 10000 },
+                        { id: 'familiar', label: 'Familiar (8 porciones)', price: 18000 }
+                    ]
+                },
+                {
+                    id: 'extras',
+                    title: 'Bordes y Salsas Extra',
+                    required: false,
+                    type: 'checkbox',
+                    max: 3,
+                    options: [
+                        { id: 'oregano', label: 'Orégano & Aceite de Ajo', price: 0, default: true },
+                        { id: 'borde_queso', label: 'Borde Relleno de Queso', price: 4500 },
+                        { id: 'ranch', label: 'Dip Salsa Ranch', price: 1500 },
+                        { id: 'pepperoni_ex', label: 'Doble Pepperoni', price: 4000 }
+                    ]
+                }
+            ],
+            tacos: [
+                {
+                    id: 'preparacion',
+                    title: 'Preparación y Acompañamiento',
+                    required: true,
+                    type: 'radio',
+                    options: [
+                        { id: 'clasico', label: 'Preparación Clásica', price: 0, default: true },
+                        { id: 'queso_full', label: 'Extra Queso Gratinado', price: 3000 },
+                        { id: 'combo_bebida', label: 'Combo con Bebida Refrescante', price: 6500 }
+                    ]
+                },
+                {
+                    id: 'salsas',
+                    title: 'Selección de Salsas',
+                    required: false,
+                    type: 'checkbox',
+                    max: 3,
+                    options: [
+                        { id: 'sin_salsa', label: 'Sin salsa adicional', price: 0, default: true },
+                        { id: 'miel_mostaza', label: 'Salsa Miel Mostaza', price: 800 },
+                        { id: 'sweet_chili', label: 'Salsa Sweet Chili', price: 800 },
+                        { id: 'ketchup', label: 'Ketchup Clásica', price: 800 },
+                        { id: 'cheddar_dip', label: 'Salsa Queso Cheddar', price: 1500 },
+                        { id: 'guacamole', label: 'Guacamole Fresco', price: 2500 },
+                        { id: 'habanero', label: 'Salsa Picante Habanero', price: 1000 }
+                    ]
+                }
+            ],
+            bebidas: [
+                {
+                    id: 'vaso',
+                    title: 'Agregar Vaso con Hielo',
+                    required: true,
+                    type: 'radio',
+                    options: [
+                        { id: 'sin_vaso', label: 'Presentación Estándar', price: 0, default: true },
+                        { id: 'vaso_m', label: 'Vaso con Hielo Tamaño M', price: 800 },
+                        { id: 'vaso_l', label: 'Vaso con Hielo Tamaño L', price: 1500 },
+                        { id: 'vaso_xl', label: 'Vaso XL con Hielo (1 Litro)', price: 2500 }
+                    ]
+                },
+                {
+                    id: 'complementos',
+                    title: 'Complementos',
+                    required: false,
+                    type: 'checkbox',
+                    max: 2,
+                    options: [
+                        { id: 'pitillo', label: 'Incluir Pitillo Ecológico', price: 0, default: true },
+                        { id: 'limon', label: 'Rodajas de Limón Extra', price: 500 },
+                        { id: 'borde', label: 'Escarchado Dulce / Tajín', price: 1200 }
+                    ]
+                }
+            ],
+            postres: [
+                {
+                    id: 'tamano',
+                    title: 'Acompañamiento del Postre',
+                    required: true,
+                    type: 'radio',
+                    options: [
+                        { id: 'clasico', label: 'Porción Individual', price: 0, default: true },
+                        { id: 'helado_extra', label: 'Con Bola de Helado Artesanal', price: 3500 }
+                    ]
+                },
+                {
+                    id: 'toppings',
+                    title: 'Toppings Dulces',
+                    required: false,
+                    type: 'checkbox',
+                    max: 3,
+                    options: [
+                        { id: 'chocolate', label: 'Salsa de Chocolate', price: 1200 },
+                        { id: 'arequipe', label: 'Salsa de Arequipe', price: 1200 },
+                        { id: 'oreo', label: 'Trozos de Galleta Oreo', price: 1800 },
+                        { id: 'fresas', label: 'Fresas Frescas', price: 2000 }
+                    ]
+                }
+            ]
+        };
+
+        // ==========================================
         // CATÁLOGO DE PRODUCTOS GASTRONÓMICOS FOODEXPRESS
         // ==========================================
         const MENU_PRODUCTS = [
@@ -276,7 +517,7 @@
                 price: 28500,
                 rating: "4.9",
                 badge: "🔥 Más Pedida",
-                desc: "Doble carne Angus 100% (240g), queso cheddar fundido, tocineta crujiente, cebolla caramelizada y salsa trufada especial.",
+                desc: "Doble carne Angus 100% (240g), queso cheddar fundido, tocineta crujiente, cebolla caramelizada y salsa trufada.",
                 image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"
             },
             {
@@ -286,7 +527,7 @@
                 price: 24000,
                 rating: "4.8",
                 badge: "Crujiente",
-                desc: "Pechuga de pollo apanada estilo sureño ultra crujiente, pepinillos dulces, lechuga fresca y aderezo ranch de la casa.",
+                desc: "Pechuga de pollo apanada estilo sureño ultra crujiente, pepinillos dulces, lechuga fresca y aderezo ranch.",
                 image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=600&q=80"
             },
             {
@@ -296,7 +537,7 @@
                 price: 34000,
                 rating: "4.9",
                 badge: "Artesanal",
-                desc: "Masa madre de fermentación lenta, salsa pomodoro italiana, mozzarella de búfala, jamón serrano y albahaca fresca.",
+                desc: "Masa madre de fermentación lenta, salsa pomodoro italiana, mozzarella de búfala, jamón serrano y albahaca.",
                 image: "https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=600&q=80"
             },
             {
@@ -316,7 +557,7 @@
                 price: 26500,
                 rating: "5.0",
                 badge: "⭐ Chef Choice",
-                desc: "Tortillas doradas rellenas de suave carne de res estofada con queso derretido, cilantro, cebolla y consomé caliente para sopear.",
+                desc: "Tortillas doradas rellenas de carne de res estofada con queso derretido, cilantro, cebolla y consomé.",
                 image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=600&q=80"
             },
             {
@@ -326,8 +567,28 @@
                 price: 25000,
                 rating: "4.7",
                 badge: "XXL",
-                desc: "Corte de res jugoso asado a la parrilla, arroz mexicano con especias, frijoles negros, guacamole y queso fundido.",
+                desc: "Corte de res jugoso asado a la parrilla, arroz mexicano con especias, frijoles negros, guacamole y queso.",
                 image: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 11,
+                name: "Corn Dog Coreano Crispy Queso",
+                category: "tacos",
+                price: 15500,
+                rating: "4.9",
+                badge: "🔥 Kiosko Top",
+                desc: "Banderilla coreana dorada y ultra crujiente rellena de salchicha premium y mozzarella fundido.",
+                image: "https://images.unsplash.com/photo-1619740455993-9e612b1af08a?auto=format&fit=crop&w=600&q=80"
+            },
+            {
+                id: 12,
+                name: "Hot Dog Artesanal Doble Tocineta",
+                category: "tacos",
+                price: 18500,
+                rating: "4.8",
+                badge: "Especial",
+                desc: "Pan brioche tostado, salchicha alemana ahumada, tocineta crocante, ripio de papa y queso fundido.",
+                image: "https://images.unsplash.com/photo-1627054247644-292b28b92f0b?auto=format&fit=crop&w=600&q=80"
             },
             {
                 id: 7,
@@ -336,7 +597,7 @@
                 price: 14500,
                 rating: "4.9",
                 badge: "Gourmet",
-                desc: "Helado artesanal de vainilla batido con toffee de caramelo salado, trozos de brownie húmedo y crema chantilly.",
+                desc: "Helado artesanal de vainilla batido con toffee de caramelo salado, trozos de brownie y crema chantilly.",
                 image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600&q=80"
             },
             {
@@ -350,23 +611,33 @@
                 image: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80"
             },
             {
+                id: 13,
+                name: "Soda Italiana Frutos Rojos",
+                category: "bebidas",
+                price: 9500,
+                rating: "4.8",
+                badge: "Fría",
+                desc: "Agua gasificada bien fría con sirope artesanal de cereza y arándanos, perfecta para acompañar tu pedido.",
+                image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80"
+            },
+            {
                 id: 9,
                 name: "Brownie Volcán con Helado",
                 category: "postres",
                 price: 15500,
                 rating: "4.9",
                 badge: "Caliente",
-                desc: "Pastel tibio de chocolate amargo 70% con centro líquido derretido, acompañado de bola de helado artesanal de vainilla.",
+                desc: "Pastel tibio de chocolate amargo 70% con centro líquido derretido y bola de helado artesanal de vainilla.",
                 image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=600&q=80"
             },
             {
                 id: 10,
-                name: "Cheesecake de Frutos Rojos Silvestres",
+                name: "Cheesecake de Frutos Rojos",
                 category: "postres",
                 price: 16000,
                 rating: "4.8",
                 badge: "Suave",
-                desc: "Cremoso pastel de queso estilo New York sobre crujiente base de galleta con compota artesanal de arándanos y fresas.",
+                desc: "Cremoso pastel de queso estilo New York sobre base de galleta con compota artesanal de arándanos.",
                 image: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80"
             }
         ];
@@ -375,6 +646,9 @@
         let currentCategory = 'all';
         let searchQuery = '';
         let shoppingCart = [];
+        let activeModalProduct = null;
+        let activeModalQty = 1;
+        let activeModalSelections = {};
 
         // ==========================================
         // MANEJO DE VISTAS (LOGIN / MENÚ / COCINA)
@@ -409,20 +683,27 @@
         }
 
         function showMenuScreen(username) {
-            // Ocultar Auth y mostrar Menú
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('menu-view').classList.add('active-view');
             document.body.classList.add('in-menu');
 
-            // Actualizar datos del usuario en la interfaz
             const displayName = username || "Cliente FoodExpress";
             document.getElementById('logged-username').innerText = displayName;
             document.getElementById('user-avatar-letter').innerText = displayName.charAt(0).toUpperCase();
-            document.getElementById('hero-username-greeting').innerText = `¡${displayName}, te la llevamos volando!`;
+            document.getElementById('hero-username-greeting').innerText = `¡Hola ${displayName}! Envío gratis desde $30.000`;
 
-            // Renderizar productos
             renderProducts();
             updateCartUI();
+        }
+
+        function toggleKioskTheme() {
+            const menuView = document.getElementById('menu-view');
+            const btn = document.getElementById('btn-toggle-theme');
+            const isLight = menuView.classList.toggle('kiosk-light');
+            menuView.classList.toggle('kiosk-dark', !isLight);
+            btn.innerHTML = isLight
+                ? '<i class="fa-solid fa-moon"></i>'
+                : '<i class="fa-solid fa-sun"></i>';
         }
 
         function logout() {
@@ -438,28 +719,27 @@
         }
 
         // ==========================================
-        // RENDERIZADO DEL CATÁLOGO DE PRODUCTOS
+        // RENDERIZADO DEL CATÁLOGO ESTILO KIOSKO
         // ==========================================
         function formatMoney(amount) {
-            return '$ ' + amount.toLocaleString('es-CO');
+            return '$ ' + Number(amount).toLocaleString('es-CO');
         }
 
         function renderProducts() {
             const grid = document.getElementById('products-grid');
             const countLabel = document.getElementById('products-count-label');
 
-            // Filtrar productos por categoría y búsqueda
             const filtered = MENU_PRODUCTS.filter(item => {
                 const matchesCat = (currentCategory === 'all') || (item.category === currentCategory);
                 const query = searchQuery.trim().toLowerCase();
-                const matchesSearch = !query || 
-                    item.name.toLowerCase().includes(query) || 
+                const matchesSearch = !query ||
+                    item.name.toLowerCase().includes(query) ||
                     item.desc.toLowerCase().includes(query) ||
                     item.category.toLowerCase().includes(query);
                 return matchesCat && matchesSearch;
             });
 
-            countLabel.innerText = `${filtered.length} platillo${filtered.length === 1 ? '' : 's'} disponible${filtered.length === 1 ? '' : 's'}`;
+            countLabel.innerText = `${filtered.length} producto${filtered.length === 1 ? '' : 's'}`;
 
             if (filtered.length === 0) {
                 grid.innerHTML = `
@@ -473,23 +753,18 @@
             }
 
             grid.innerHTML = filtered.map(item => `
-                <article class="food-card">
-                    <div class="food-img-wrapper">
-                        <img src="${item.image}" alt="${item.name}" class="food-img" loading="lazy">
-                        ${item.badge ? `<span class="food-badge">${item.badge}</span>` : ''}
-                        <span class="food-rating"><i class="fa-solid fa-star"></i> ${item.rating}</span>
+                <article class="kiosk-card" onclick="openProductModal(${item.id})">
+                    <div class="kiosk-card-img-box">
+                        <img src="${item.image}" alt="${item.name}" class="kiosk-card-img" loading="lazy">
+                        ${item.badge ? `<span class="kiosk-card-badge">${item.badge}</span>` : ''}
+                        <span class="kiosk-card-rating"><i class="fa-solid fa-star"></i> ${item.rating}</span>
                     </div>
-                    <div class="food-details">
-                        <span class="food-category-tag">${item.category}</span>
-                        <h4 class="food-title">${item.name}</h4>
-                        <p class="food-desc">${item.desc}</p>
-                        <div class="food-card-footer">
-                            <div class="food-price"><span>$</span>${item.price.toLocaleString('es-CO')}</div>
-                            <button class="add-cart-btn" onclick="addToCart(${item.id})">
-                                <i class="fa-solid fa-plus"></i>
-                                <span>Agregar</span>
-                            </button>
-                        </div>
+                    <div class="kiosk-card-body">
+                        <h4 class="kiosk-card-title">${item.name}</h4>
+                        <div class="kiosk-card-price">${formatMoney(item.price)}</div>
+                        <button type="button" class="kiosk-card-btn" onclick="event.stopPropagation(); openProductModal(${item.id})">
+                            <i class="fa-solid fa-sliders"></i> Personalizar y Agregar
+                        </button>
                     </div>
                 </article>
             `).join('');
@@ -497,25 +772,210 @@
 
         function filterCategory(cat, btnElement) {
             currentCategory = cat;
-            document.querySelectorAll('.category-pill').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.kiosk-cat-btn, .category-pill').forEach(btn => btn.classList.remove('active'));
+            // Activar tanto en sidebar como en barra móvil
+            document.querySelectorAll(`[onclick*="filterCategory('${cat}'"]`).forEach(btn => btn.classList.add('active'));
             if (btnElement) btnElement.classList.add('active');
 
             const titleMap = {
-                'all': 'Todos los Platos Disponibles',
-                'hamburguesas': 'Hamburguesas Artesanales',
-                'pizzas': 'Pizzas al Horno',
-                'tacos': 'Tacos & Especialidades Tex-Mex',
-                'bebidas': 'Bebidas & Malteadas',
+                'all': 'Todos los Platos',
+                'hamburguesas': 'Hamburguesas',
+                'pizzas': 'Pizzas Artesanales',
+                'tacos': 'Perros & Tex-Mex',
+                'bebidas': 'Bebidas & Vasos',
                 'postres': 'Postres & Dulces'
             };
             document.getElementById('current-category-title').innerText = titleMap[cat] || 'Platos';
-
             renderProducts();
         }
 
         function handleSearch(val) {
             searchQuery = val;
             renderProducts();
+        }
+
+        // ==========================================
+        // MODAL DE PERSONALIZACIÓN DE PRODUCTO
+        // ==========================================
+        function openProductModal(productId) {
+            const product = MENU_PRODUCTS.find(p => p.id === productId);
+            if (!product) return;
+
+            activeModalProduct = product;
+            activeModalQty = 1;
+            activeModalSelections = {};
+
+            const groups = OPTION_GROUPS_BY_CATEGORY[product.category] || [];
+            groups.forEach(group => {
+                if (group.type === 'radio') {
+                    const def = group.options.find(o => o.default) || group.options[0];
+                    activeModalSelections[group.id] = def ? [def.id] : [];
+                } else {
+                    const defs = group.options.filter(o => o.default).map(o => o.id);
+                    activeModalSelections[group.id] = defs;
+                }
+            });
+
+            document.getElementById('cm-image').src = product.image;
+            document.getElementById('cm-badge').innerText = product.badge || product.category;
+            document.getElementById('cm-title').innerText = product.name;
+            document.getElementById('cm-desc').innerText = product.desc;
+            document.getElementById('cm-base-price').innerText = `${formatMoney(product.price)} ~`;
+            document.getElementById('cm-qty').innerText = '1';
+
+            renderModalOptionGroups(groups);
+            updateModalPriceDisplay();
+
+            document.getElementById('custom-modal-backdrop').classList.add('open');
+        }
+
+        function closeProductModal() {
+            document.getElementById('custom-modal-backdrop').classList.remove('open');
+            activeModalProduct = null;
+        }
+
+        function renderModalOptionGroups(groups) {
+            const container = document.getElementById('cm-options-container');
+            if (!groups || groups.length === 0) {
+                container.innerHTML = '<p style="color:#6b7280;font-size:0.9rem;">Producto listo para agregar.</p>';
+                return;
+            }
+
+            container.innerHTML = groups.map(group => {
+                const selectedIds = activeModalSelections[group.id] || [];
+                const badgeClass = group.required ? 'req-badge' : 'opt-badge';
+                const badgeText = group.required ? 'Obligatorio' : 'Opcional';
+                const maxHint = (!group.required && group.max) ? `<small class="cm-group-hint">Puedes elegir hasta ${group.max} opciones</small>` : '';
+
+                const optionsHtml = group.options.map(opt => {
+                    const isChecked = selectedIds.includes(opt.id);
+                    const priceLabel = opt.price > 0 ? `+${formatMoney(opt.price)}` : '+$ 0';
+                    return `
+                        <label class="cm-option-row ${isChecked ? 'selected' : ''}" onclick="toggleModalOption('${group.id}', '${opt.id}', '${group.type}', ${group.max || 99}, event)">
+                            <div class="cm-option-left">
+                                <span class="cm-input-indicator ${group.type} ${isChecked ? 'checked' : ''}">
+                                    ${isChecked ? (group.type === 'radio' ? '<span class="dot"></span>' : '<i class="fa-solid fa-check"></i>') : ''}
+                                </span>
+                                <span class="cm-option-label">${opt.label}</span>
+                            </div>
+                            <span class="cm-option-price">${priceLabel}</span>
+                        </label>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="cm-option-group">
+                        <div class="cm-group-header">
+                            <div>
+                                <h4>${group.title}</h4>
+                                ${maxHint}
+                            </div>
+                            <span class="cm-group-badge ${badgeClass}">${badgeText}</span>
+                        </div>
+                        <div class="cm-options-list">
+                            ${optionsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleModalOption(groupId, optionId, type, max, event) {
+            if (event) event.preventDefault();
+            if (!activeModalProduct) return;
+
+            const current = activeModalSelections[groupId] || [];
+            if (type === 'radio') {
+                activeModalSelections[groupId] = [optionId];
+            } else {
+                const idx = current.indexOf(optionId);
+                if (idx > -1) {
+                    current.splice(idx, 1);
+                } else {
+                    if (current.length >= max) {
+                        showToast(`Máximo ${max} opciones permitidas en este grupo`, "error");
+                        return;
+                    }
+                    // Si selecciona una opción real con precio o distinta, quitar "sin_extra"/"sin_salsa" si estaba marcado
+                    if (optionId !== 'sin_extra' && optionId !== 'sin_salsa') {
+                        const clean = current.filter(id => id !== 'sin_extra' && id !== 'sin_salsa');
+                        clean.push(optionId);
+                        activeModalSelections[groupId] = clean;
+                    } else {
+                        activeModalSelections[groupId] = [optionId];
+                    }
+                }
+            }
+
+            const groups = OPTION_GROUPS_BY_CATEGORY[activeModalProduct.category] || [];
+            renderModalOptionGroups(groups);
+            updateModalPriceDisplay();
+        }
+
+        function changeModalQty(delta) {
+            activeModalQty = Math.max(1, activeModalQty + delta);
+            document.getElementById('cm-qty').innerText = activeModalQty;
+            updateModalPriceDisplay();
+        }
+
+        function computeModalUnitPrice() {
+            if (!activeModalProduct) return 0;
+            let extra = 0;
+            const groups = OPTION_GROUPS_BY_CATEGORY[activeModalProduct.category] || [];
+            groups.forEach(group => {
+                const sel = activeModalSelections[group.id] || [];
+                sel.forEach(optId => {
+                    const opt = group.options.find(o => o.id === optId);
+                    if (opt) extra += opt.price;
+                });
+            });
+            return activeModalProduct.price + extra;
+        }
+
+        function updateModalPriceDisplay() {
+            const unitPrice = computeModalUnitPrice();
+            const total = unitPrice * activeModalQty;
+            document.getElementById('cm-btn-add').innerText = `Agregar (${formatMoney(total)})`;
+        }
+
+        function confirmAddFromModal() {
+            if (!activeModalProduct) return;
+            const groups = OPTION_GROUPS_BY_CATEGORY[activeModalProduct.category] || [];
+            const selectedLabels = [];
+
+            groups.forEach(group => {
+                const sel = activeModalSelections[group.id] || [];
+                sel.forEach(optId => {
+                    const opt = group.options.find(o => o.id === optId);
+                    if (opt && opt.id !== 'sin_extra' && opt.id !== 'sin_salsa' && opt.id !== 'sin_vaso') {
+                        selectedLabels.push(opt.label);
+                    }
+                });
+            });
+
+            const unitPrice = computeModalUnitPrice();
+            const optionsText = selectedLabels.join(', ');
+            const cartKey = `${activeModalProduct.id}::${optionsText}`;
+
+            const existingIndex = shoppingCart.findIndex(item => item.cartKey === cartKey);
+            if (existingIndex > -1) {
+                shoppingCart[existingIndex].qty += activeModalQty;
+            } else {
+                shoppingCart.push({
+                    cartKey,
+                    id: activeModalProduct.id,
+                    name: activeModalProduct.name,
+                    optionsText,
+                    price: unitPrice,
+                    image: activeModalProduct.image,
+                    qty: activeModalQty
+                });
+            }
+
+            const addedName = activeModalProduct.name;
+            closeProductModal();
+            updateCartUI();
+            showToast(`¡Agregado: ${addedName}!`, "success");
         }
 
         // ==========================================
@@ -533,36 +993,8 @@
             }
         }
 
-        function addToCart(productId) {
-            const product = MENU_PRODUCTS.find(p => p.id === productId);
-            if (!product) return;
-
-            const existingIndex = shoppingCart.findIndex(item => item.id === productId);
-            if (existingIndex > -1) {
-                shoppingCart[existingIndex].qty += 1;
-            } else {
-                shoppingCart.push({
-                    id: product.id,
-                    name: product.name,
-                    price: product.price,
-                    image: product.image,
-                    qty: 1
-                });
-            }
-
-            updateCartUI();
-            showToast(`¡Agregado al pedido: ${product.name}!`, "success");
-
-            // Micro-animación en el botón del carrito
-            const cartBtn = document.getElementById('btn-open-cart');
-            cartBtn.style.transform = 'scale(1.15)';
-            setTimeout(() => { cartBtn.style.transform = ''; }, 200);
-        }
-
-        function changeQty(productId, delta) {
-            const index = shoppingCart.findIndex(item => item.id === productId);
-            if (index === -1) return;
-
+        function changeQty(index, delta) {
+            if (index < 0 || index >= shoppingCart.length) return;
             shoppingCart[index].qty += delta;
             if (shoppingCart[index].qty <= 0) {
                 shoppingCart.splice(index, 1);
@@ -570,68 +1002,119 @@
             updateCartUI();
         }
 
-        function removeFromCart(productId) {
-            shoppingCart = shoppingCart.filter(item => item.id !== productId);
+        function removeFromCart(index) {
+            shoppingCart.splice(index, 1);
             updateCartUI();
+        }
+
+        function clearCart() {
+            if (shoppingCart.length === 0) return;
+            shoppingCart = [];
+            updateCartUI();
+            showToast("Canasta vaciada.", "info");
         }
 
         function updateCartUI() {
             const counter = document.getElementById('cart-counter');
+            const headerCount = document.getElementById('cart-header-count');
             const container = document.getElementById('cart-items-container');
             const subtotalEl = document.getElementById('cart-subtotal');
             const shippingEl = document.getElementById('cart-shipping');
             const totalEl = document.getElementById('cart-total');
             const checkoutBtn = document.getElementById('btn-checkout');
 
-            // Total de productos en unidades
             const totalItems = shoppingCart.reduce((acc, curr) => acc + curr.qty, 0);
-            counter.innerText = totalItems;
+            if (counter) counter.innerText = totalItems;
+            if (headerCount) headerCount.innerText = `${totalItems} ítem${totalItems === 1 ? '' : 's'}`;
 
             if (shoppingCart.length === 0) {
                 container.innerHTML = `
                     <div class="cart-empty-message">
                         <i class="fa-solid fa-basket-shopping"></i>
-                        <h4>Tu canasta está vacía</h4>
-                        <p>Explora el menú y agrega tus comidas favoritas.</p>
+                        <h4>Tu pedido está vacío</h4>
+                        <p>Selecciona un producto del catálogo para personalizarlo y agregarlo.</p>
                     </div>
                 `;
                 subtotalEl.innerText = '$ 0';
                 shippingEl.innerText = '$ 0';
                 totalEl.innerText = '$ 0';
                 checkoutBtn.disabled = true;
+                checkoutBtn.innerHTML = `<span>Confirmar Pedido</span><i class="fa-solid fa-arrow-right"></i>`;
                 return;
             }
 
             checkoutBtn.disabled = false;
 
-            // Calcular montos
             const subtotal = shoppingCart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
-            // Envío gratis si supera 30.000 COP, sino 4.000 COP
             const shipping = subtotal >= 30000 ? 0 : 4000;
             const total = subtotal + shipping;
 
             subtotalEl.innerText = formatMoney(subtotal);
             shippingEl.innerText = shipping === 0 ? '¡GRATIS!' : formatMoney(shipping);
             totalEl.innerText = formatMoney(total);
+            checkoutBtn.innerHTML = `<span>Confirmar Pedido (${formatMoney(total)})</span><i class="fa-solid fa-arrow-right"></i>`;
 
-            // Renderizar lista de items
-            container.innerHTML = shoppingCart.map(item => `
+            container.innerHTML = shoppingCart.map((item, idx) => `
                 <div class="cart-item">
                     <img src="${item.image}" alt="${item.name}" class="cart-item-img">
                     <div class="cart-item-info">
                         <div class="cart-item-name">${item.name}</div>
+                        ${item.optionsText ? `<div class="cart-item-options">${item.optionsText}</div>` : ''}
                         <div class="cart-item-price">${formatMoney(item.price * item.qty)}</div>
                     </div>
                     <div class="cart-item-controls">
-                        <button class="qty-btn" onclick="changeQty(${item.id}, -1)">-</button>
+                        <button class="qty-btn" onclick="changeQty(${idx}, -1)">-</button>
                         <span class="qty-count">${item.qty}</span>
-                        <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+                        <button class="qty-btn" onclick="changeQty(${idx}, 1)">+</button>
                     </div>
-                    <button class="cart-item-remove" onclick="removeFromCart(${item.id})" title="Eliminar">
+                    <button class="cart-item-remove" onclick="removeFromCart(${idx})" title="Eliminar">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
             `).join('');
+        }
+
+        // ==========================================
+        // SEGUIMIENTO EN VIVO: MIS PEDIDOS (CLIENTE)
+        // ==========================================
+        function openMyOrdersModal() {
+            document.getElementById('my-orders-modal-backdrop').classList.add('open');
+            loadMyOrders();
+        }
+
+        function closeMyOrdersModal() {
+            document.getElementById('my-orders-modal-backdrop').classList.remove('open');
+        }
+
+        async function loadMyOrders() {
+            const list = document.getElementById('my-orders-list');
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            list.innerHTML = '<p style="color:#a0a0ab;">Consultando pedidos...</p>';
+            try {
+                const res = await fetch(`${API_BASE}/api/pedidos/mis-pedidos`, {
+                    headers: { 'Authorization': `Bearer ${session.token}` }
+                });
+                const pedidos = await res.json();
+                if (!Array.isArray(pedidos) || pedidos.length === 0) {
+                    list.innerHTML = '<p style="color:#a0a0ab;padding:24px;">Aún no has realizado pedidos en FoodExpress.</p>';
+                    return;
+                }
+                const colors = { Pendiente: '#e3b341', Cocinando: '#388bfd', Enviado: '#3fb950', Entregado: '#8b949e' };
+                list.innerHTML = pedidos.map(p => `
+                    <div class="my-order-row">
+                        <div class="my-order-top">
+                            <strong>#FE-${p.id}</strong>
+                            <span class="my-order-status" style="color:${colors[p.estado] || '#ccc'};border-color:${colors[p.estado] || '#555'};">${p.estado}</span>
+                        </div>
+                        <small>${new Date(p.fecha_creacion).toLocaleString('es-CO')} · <strong>${formatMoney(p.total)}</strong></small>
+                        <ul>
+                            ${(p.items || []).map(it => `<li>${it.cantidad}× ${it.nombre}</li>`).join('')}
+                        </ul>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<p style="color:#ef4444;">Error al consultar pedidos: ${err.message}</p>`;
+            }
         }
 
         // ==========================================
@@ -943,7 +1426,20 @@
         async function confirmarPedidoReal() {
             if (shoppingCart.length === 0) return;
             const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
-            const items = shoppingCart.map(i => ({ nombre: i.name, precio: i.price, cantidad: i.qty }));
+            const btn = document.getElementById('btn-checkout');
+            const prevHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enviando a cocina...`;
+
+            const items = shoppingCart.map(i => {
+                const fullName = i.optionsText ? `${i.name} (${i.optionsText})` : i.name;
+                return {
+                    nombre: fullName.length > 145 ? fullName.slice(0, 142) + '...' : fullName,
+                    precio: i.price,
+                    cantidad: i.qty
+                };
+            });
+
             try {
                 const res = await fetch(`${API_BASE}/api/pedidos`, {
                     method: 'POST',
@@ -957,9 +1453,13 @@
                     updateCartUI();
                 } else {
                     showToast(data.error || "Error al crear pedido", "error");
+                    btn.disabled = false;
+                    btn.innerHTML = prevHtml;
                 }
             } catch (err) {
                 showToast("Error: " + err.message, "error");
+                btn.disabled = false;
+                btn.innerHTML = prevHtml;
             }
         }
     </script>
