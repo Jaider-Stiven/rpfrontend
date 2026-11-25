@@ -498,7 +498,7 @@
                     options: [
                         { id: 'chocolate', label: 'Salsa de Chocolate', price: 1200 },
                         { id: 'arequipe', label: 'Salsa de Arequipe', price: 1200 },
-                        { id: 'oreo', label: 'Trozos de Galleta Oreo', price: 1800 },
+                        { id: 'galleta', label: 'Trozos de Galleta de Chocolate', price: 1800 },
                         { id: 'fresas', label: 'Fresas Frescas', price: 2000 }
                     ]
                 }
@@ -621,22 +621,22 @@
             },
             {
                 id: 14,
-                name: "Coca-Cola Original Fría",
+                name: "Gaseosa Cola Clásica Fría",
                 category: "bebidas",
                 price: 5500,
                 rating: "4.9",
                 badge: "Clásica",
-                desc: "Refrescante Coca-Cola original servida bien fría. Elige tamaño de vaso con hielo si lo deseas.",
+                desc: "Refrescante gaseosa sabor cola clásica servida bien fría. Elige tamaño de vaso con hielo si lo deseas.",
                 image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80"
             },
             {
                 id: 15,
-                name: "Coca-Cola Zero Azúcar",
+                name: "Gaseosa Cola Sin Azúcar",
                 category: "bebidas",
                 price: 5500,
                 rating: "4.8",
                 badge: "Sin Azúcar",
-                desc: "Todo el sabor clásico de Coca-Cola sin calorías ni azúcar añadido, bien fría.",
+                desc: "Todo el sabor clásico a cola sin calorías ni azúcar añadido, bien fría.",
                 image: "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=600&q=80"
             },
             {
@@ -729,7 +729,9 @@
                     const parsed = JSON.parse(savedSession);
                     if (parsed && parsed.usuario) {
                         const rol = parsed.rol || 'cliente';
-                        if (rol === 'cocina' || rol === 'admin') {
+                        if (rol === 'admin') {
+                            showAdminPanel(parsed.usuario, parsed.token);
+                        } else if (rol === 'cocina') {
                             showKitchenPanel(parsed.usuario, parsed.token);
                         } else {
                             showMenuScreen(parsed.usuario);
@@ -749,6 +751,8 @@
             document.getElementById('menu-view').classList.remove('active-view');
             const kp = document.getElementById('kitchen-panel');
             if (kp) kp.style.display = 'none';
+            const ap = document.getElementById('admin-panel');
+            if (ap) ap.style.display = 'none';
         }
 
         function showMenuScreen(username) {
@@ -1321,7 +1325,9 @@
                             rol: rol
                         }));
                         setTimeout(() => {
-                            if (rol === 'cocina' || rol === 'admin') {
+                            if (rol === 'admin') {
+                                showAdminPanel(activeUser, data.token);
+                            } else if (rol === 'cocina') {
                                 showKitchenPanel(activeUser, data.token);
                             } else {
                                 showMenuScreen(activeUser);
@@ -1487,6 +1493,360 @@
             if (panel) panel.style.display = 'none';
             showAuthScreen();
             showToast("Sesión de cocina cerrada.", "info");
+        }
+
+        // ==========================================
+        // PANEL DE ADMINISTRADOR (USUARIOS + PEDIDOS)
+        // ==========================================
+        let adminActiveTab = 'usuarios';
+
+        async function showAdminPanel(username, token) {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('menu-view').classList.remove('active-view');
+            const kp = document.getElementById('kitchen-panel');
+            if (kp) kp.style.display = 'none';
+            document.body.classList.add('in-menu');
+
+            let adminDiv = document.getElementById('admin-panel');
+            if (!adminDiv) {
+                adminDiv = document.createElement('div');
+                adminDiv.id = 'admin-panel';
+                document.body.appendChild(adminDiv);
+            }
+            adminDiv.style.cssText = 'position:relative;z-index:10;width:100%;min-height:100vh;background:#0d1117;color:#f0f6fc;font-family:Outfit,sans-serif;padding:0;';
+            adminDiv.style.display = 'block';
+            adminDiv.innerHTML = `
+                <header style="background:#161b22;border-bottom:1px solid #30363d;padding:18px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <i class="fa-solid fa-shield-halved" style="color:#a855f7;font-size:1.6rem;"></i>
+                        <h2 style="margin:0;color:#ffffff;font-size:1.35rem;">Food<span style="color:#ff5e36;">Express</span> <span style="color:#8b949e;font-weight:400;font-size:1.05rem;">/ Panel de Administración</span></h2>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <span style="background:rgba(168,85,247,0.16);border:1px solid #a855f7;color:#d8b4fe;padding:6px 14px;border-radius:999px;font-size:0.85rem;font-weight:600;">
+                            <i class="fa-solid fa-user-shield"></i> ${username} (admin)
+                        </span>
+                        <button onclick="logoutAdmin()" style="background:#e94560;border:none;color:#ffffff;padding:8px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.88rem;display:flex;align-items:center;gap:6px;">
+                            <i class="fa-solid fa-right-from-bracket"></i> Salir
+                        </button>
+                    </div>
+                </header>
+
+                <main style="max-width:1240px;margin:0 auto;padding:28px 20px;">
+                    <!-- Tarjetas KPI -->
+                    <div id="admin-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:26px;">
+                        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;">
+                            <span style="color:#8b949e;font-size:0.82rem;">Ventas Totales</span>
+                            <h3 id="kpi-ventas" style="margin:6px 0 0;font-size:1.6rem;color:#3fb950;">$ 0</h3>
+                        </div>
+                        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;">
+                            <span style="color:#8b949e;font-size:0.82rem;">Pedidos Totales</span>
+                            <h3 id="kpi-pedidos" style="margin:6px 0 0;font-size:1.6rem;color:#58a6ff;">0</h3>
+                        </div>
+                        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;">
+                            <span style="color:#8b949e;font-size:0.82rem;">Usuarios Registrados</span>
+                            <h3 id="kpi-usuarios" style="margin:6px 0 0;font-size:1.6rem;color:#d8b4fe;">0</h3>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+                        <div style="display:flex;gap:10px;">
+                            <button id="admin-tab-usuarios" onclick="switchAdminTab('usuarios')" style="background:#1f6feb;border:1px solid #388bfd;color:#fff;padding:10px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.9rem;">
+                                <i class="fa-solid fa-users-gear"></i> Gestión de Usuarios y Roles
+                            </button>
+                            <button id="admin-tab-pedidos" onclick="switchAdminTab('pedidos')" style="background:#161b22;border:1px solid #30363d;color:#c9d1d9;padding:10px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.9rem;">
+                                <i class="fa-solid fa-receipt"></i> Todos los Pedidos
+                            </button>
+                        </div>
+                        <button onclick="cargarAdminDatos()" style="background:#238636;border:none;color:#fff;padding:9px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.88rem;">
+                            <i class="fa-solid fa-rotate-right"></i> Actualizar
+                        </button>
+                    </div>
+
+                    <!-- Vista Usuarios -->
+                    <section id="admin-section-usuarios">
+                        <form onsubmit="crearUsuarioAdmin(event)" style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:end;">
+                            <div>
+                                <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Nuevo Usuario</label>
+                                <input id="admin-new-user" type="text" required placeholder="Ej: operador2" style="width:100%;padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Contraseña (se encripta con bcrypt)</label>
+                                <input id="admin-new-pass" type="password" required placeholder="Mínimo 4 caracteres" style="width:100%;padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Rol Asignado</label>
+                                <select id="admin-new-rol" style="width:100%;padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
+                                    <option value="cliente">cliente</option>
+                                    <option value="cocina">cocina</option>
+                                    <option value="admin">admin</option>
+                                </select>
+                            </div>
+                            <button type="submit" style="background:#a855f7;border:none;color:#fff;padding:11px 16px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:700;">
+                                <i class="fa-solid fa-user-plus"></i> Crear Usuario
+                            </button>
+                        </form>
+
+                        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;text-align:left;font-size:0.9rem;">
+                                <thead>
+                                    <tr style="background:#21262d;color:#8b949e;border-bottom:1px solid #30363d;">
+                                        <th style="padding:12px 16px;">ID</th>
+                                        <th style="padding:12px 16px;">Usuario</th>
+                                        <th style="padding:12px 16px;">Rol Actual</th>
+                                        <th style="padding:12px 16px;">Cambiar Rol</th>
+                                        <th style="padding:12px 16px;text-align:right;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-users-tbody">
+                                    <tr><td colspan="5" style="padding:20px;color:#8b949e;">Cargando usuarios...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Vista Pedidos -->
+                    <section id="admin-section-pedidos" style="display:none;">
+                        <div id="admin-orders-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px;">
+                            <p style="color:#8b949e;">Cargando pedidos...</p>
+                        </div>
+                    </section>
+                </main>`;
+            await cargarAdminDatos();
+        }
+
+        function switchAdminTab(tab) {
+            adminActiveTab = tab;
+            const uSec = document.getElementById('admin-section-usuarios');
+            const pSec = document.getElementById('admin-section-pedidos');
+            const uBtn = document.getElementById('admin-tab-usuarios');
+            const pBtn = document.getElementById('admin-tab-pedidos');
+            if (tab === 'usuarios') {
+                uSec.style.display = 'block';
+                pSec.style.display = 'none';
+                uBtn.style.background = '#1f6feb';
+                uBtn.style.borderColor = '#388bfd';
+                pBtn.style.background = '#161b22';
+                pBtn.style.borderColor = '#30363d';
+            } else {
+                uSec.style.display = 'none';
+                pSec.style.display = 'block';
+                pBtn.style.background = '#1f6feb';
+                pBtn.style.borderColor = '#388bfd';
+                uBtn.style.background = '#161b22';
+                uBtn.style.borderColor = '#30363d';
+            }
+        }
+
+        async function cargarAdminDatos() {
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            const headers = { 'Authorization': `Bearer ${session.token}` };
+
+            try {
+                const [resUsers, resOrders] = await Promise.all([
+                    fetch(`${API_BASE}/api/usuarios`, { headers }),
+                    fetch(`${API_BASE}/api/pedidos`, { headers })
+                ]);
+
+                const usuarios = await resUsers.json();
+                const pedidos = await resOrders.json();
+
+                if (Array.isArray(usuarios)) {
+                    document.getElementById('kpi-usuarios').innerText = usuarios.length;
+                    const tbody = document.getElementById('admin-users-tbody');
+                    const rolBadge = {
+                        admin: 'background:rgba(168,85,247,0.16);border:1px solid #a855f7;color:#d8b4fe;',
+                        cocina: 'background:rgba(56,139,253,0.16);border:1px solid #388bfd;color:#58a6ff;',
+                        cliente: 'background:rgba(46,160,67,0.16);border:1px solid #3fb950;color:#3fb950;'
+                    };
+                    tbody.innerHTML = usuarios.map(u => `
+                        <tr style="border-bottom:1px solid #21262d;">
+                            <td style="padding:12px 16px;color:#8b949e;">#${u.id}</td>
+                            <td style="padding:12px 16px;font-weight:600;color:#fff;">${u.usuario}</td>
+                            <td style="padding:12px 16px;">
+                                <span style="${rolBadge[u.rol] || rolBadge.cliente}padding:3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;">${u.rol || 'cliente'}</span>
+                            </td>
+                            <td style="padding:12px 16px;">
+                                <select onchange="cambiarRolUsuario(${u.id}, this.value)" style="padding:6px 10px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;font-size:0.84rem;">
+                                    <option value="cliente" ${u.rol === 'cliente' ? 'selected' : ''}>cliente</option>
+                                    <option value="cocina" ${u.rol === 'cocina' ? 'selected' : ''}>cocina</option>
+                                    <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>admin</option>
+                                </select>
+                            </td>
+                            <td style="padding:12px 16px;text-align:right;">
+                                <button onclick="eliminarUsuarioAdmin(${u.id}, '${u.usuario}')" style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#f87171;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.8rem;font-weight:600;">
+                                    <i class="fa-solid fa-trash"></i> Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+
+                if (Array.isArray(pedidos)) {
+                    const totalVentas = pedidos.reduce((acc, p) => acc + Number(p.total || 0), 0);
+                    document.getElementById('kpi-pedidos').innerText = pedidos.length;
+                    document.getElementById('kpi-ventas').innerText = formatMoney(totalVentas);
+
+                    const grid = document.getElementById('admin-orders-grid');
+                    if (pedidos.length === 0) {
+                        grid.innerHTML = '<p style="color:#8b949e;">No hay pedidos registrados aún.</p>';
+                    } else {
+                        const badgeStyle = {
+                            Pendiente: 'background:rgba(210,153,34,0.15);border:1px solid #d29922;color:#e3b341;',
+                            Cocinando: 'background:rgba(56,139,253,0.15);border:1px solid #388bfd;color:#58a6ff;',
+                            Enviado: 'background:rgba(46,160,67,0.15);border:1px solid #3fb950;color:#3fb950;',
+                            Entregado: 'background:rgba(110,118,129,0.15);border:1px solid #6e7681;color:#8b949e;'
+                        };
+                        grid.innerHTML = pedidos.map(p => `
+                            <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;">
+                                <div style="background:#21262d;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+                                    <div>
+                                        <strong style="color:#fff;">#FE-${p.id}</strong>
+                                        <span style="color:#8b949e;font-size:0.78rem;display:block;">${new Date(p.fecha_creacion).toLocaleString('es-CO')}</span>
+                                    </div>
+                                    <span style="${badgeStyle[p.estado] || ''}padding:3px 10px;border-radius:999px;font-size:0.76rem;font-weight:700;">${p.estado}</span>
+                                </div>
+                                <div style="padding:14px 16px;flex:1;">
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                                        <span style="color:#c9d1d9;font-size:0.88rem;"><i class="fa-solid fa-user"></i> ${p.cliente_nombre}</span>
+                                        <strong style="color:#ff5e36;">${formatMoney(p.total)}</strong>
+                                    </div>
+                                    <ul style="margin:0 0 12px;padding-left:18px;font-size:0.85rem;color:#e6edf3;">
+                                        ${(p.items || []).map(it => `<li>${it.cantidad}× ${it.nombre}</li>`).join('')}
+                                    </ul>
+                                    <div style="display:flex;gap:8px;align-items:center;">
+                                        <select onchange="cambiarEstadoAdmin(${p.id}, this.value)" style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;font-size:0.82rem;">
+                                            <option value="Pendiente" ${p.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                                            <option value="Cocinando" ${p.estado === 'Cocinando' ? 'selected' : ''}>Cocinando</option>
+                                            <option value="Enviado" ${p.estado === 'Enviado' ? 'selected' : ''}>Enviado</option>
+                                            <option value="Entregado" ${p.estado === 'Entregado' ? 'selected' : ''}>Entregado</option>
+                                        </select>
+                                        <button onclick="eliminarPedidoAdmin(${p.id})" style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#f87171;padding:7px 10px;border-radius:6px;cursor:pointer;" title="Eliminar pedido">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (err) {
+                showToast("Error al cargar datos del panel admin: " + err.message, "error");
+            }
+        }
+
+        async function crearUsuarioAdmin(event) {
+            event.preventDefault();
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            const usuario = document.getElementById('admin-new-user').value.trim();
+            const contrasena = document.getElementById('admin-new-pass').value;
+            const rol = document.getElementById('admin-new-rol').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/usuarios`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.token}` },
+                    body: JSON.stringify({ usuario, contraseña: contrasena, rol })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Usuario "${usuario}" (${rol}) creado con bcrypt`, "success");
+                    event.target.reset();
+                    await cargarAdminDatos();
+                } else {
+                    showToast(data.error || "No se pudo crear el usuario", "error");
+                }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+            }
+        }
+
+        async function cambiarRolUsuario(id, nuevoRol) {
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            try {
+                const res = await fetch(`${API_BASE}/api/usuarios/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.token}` },
+                    body: JSON.stringify({ rol: nuevoRol })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Rol actualizado a "${nuevoRol}"`, "success");
+                    await cargarAdminDatos();
+                } else {
+                    showToast(data.error || "Error al actualizar rol", "error");
+                }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+            }
+        }
+
+        async function eliminarUsuarioAdmin(id, nombre) {
+            if (!confirm(`¿Eliminar al usuario "${nombre}"?`)) return;
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            try {
+                const res = await fetch(`${API_BASE}/api/usuarios/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${session.token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Usuario "${nombre}" eliminado`, "success");
+                    await cargarAdminDatos();
+                } else {
+                    showToast(data.error || "No se pudo eliminar", "error");
+                }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+            }
+        }
+
+        async function cambiarEstadoAdmin(pedidoId, nuevoEstado) {
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            try {
+                const res = await fetch(`${API_BASE}/api/pedidos/${pedidoId}/estado`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.token}` },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Pedido #FE-${pedidoId} → ${nuevoEstado}`, "success");
+                    await cargarAdminDatos();
+                } else {
+                    showToast(data.error || "Error al cambiar estado", "error");
+                }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+            }
+        }
+
+        async function eliminarPedidoAdmin(pedidoId) {
+            if (!confirm(`¿Eliminar el pedido #FE-${pedidoId}?`)) return;
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            try {
+                const res = await fetch(`${API_BASE}/api/pedidos/${pedidoId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${session.token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Pedido #FE-${pedidoId} eliminado`, "success");
+                    await cargarAdminDatos();
+                } else {
+                    showToast(data.error || "Error al eliminar pedido", "error");
+                }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+            }
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem('foodexpress_user');
+            const panel = document.getElementById('admin-panel');
+            if (panel) panel.style.display = 'none';
+            showAuthScreen();
+            showToast("Sesión de administrador cerrada.", "info");
         }
 
         // ==========================================
