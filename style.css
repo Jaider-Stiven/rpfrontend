@@ -2419,4 +2419,255 @@ body.in-menu {
     }
 }
 
+/* ==============================================================
+   AUTH EXTENDIDO (GOOGLE, RECUPERACIÓN) + MÉTODO PAGO + COMPROBANTE
+   ============================================================== */
+.forgot-link-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -10px;
+}
+
+.forgot-link-btn {
+    background: none;
+    border: none;
+    color: #ffa185;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.forgot-link-btn:hover {
+    text-decoration: underline;
+    color: #ffffff;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0 14px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.google-signin-wrapper {
+    display: flex;
+    justify-content: center;
+    min-height: 44px;
+}
+
+.google-placeholder-btn {
+    width: 100%;
+    padding: 11px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: var(--transition);
+}
+
+.google-placeholder-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.google-fallback-note {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    align-self: center;
+}
+
+.forgot-card {
+    text-align: left;
+    max-width: 440px;
+}
+
+.forgot-subtitle {
+    text-align: left !important;
+    font-size: 0.88rem !important;
+    margin-bottom: 16px !important;
+}
+
+/* MÉTODO DE PAGO EN CARRITO (RF32) */
+.payment-method-box {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--k-border, rgba(255, 255, 255, 0.1));
+}
+
+.payment-label {
+    display: block;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--k-muted, #64748b);
+    margin-bottom: 8px;
+}
+
+.payment-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.pay-opt-btn {
+    background: var(--k-surface, #ffffff);
+    border: 1px solid var(--k-border, #e2e8f0);
+    color: var(--k-text, #111827);
+    padding: 8px 6px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+}
+
+.pay-opt-btn:hover {
+    border-color: var(--k-accent, #1877c9);
+}
+
+.pay-opt-btn.active {
+    background: rgba(24, 119, 201, 0.12);
+    border-color: var(--k-accent, #1877c9);
+    color: var(--k-accent, #1877c9);
+}
+
+.my-order-receipt-btn {
+    margin-top: 8px;
+    background: rgba(24, 119, 201, 0.15);
+    border: 1px solid #388bfd;
+    color: #58a6ff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.my-order-receipt-btn:hover {
+    background: #1f6feb;
+    color: #fff;
+}
+
+/* MODAL COMPROBANTE (RF33) */
+.receipt-modal-card {
+    max-width: 480px;
+    text-align: left;
+    padding: 24px;
+}
+
+.receipt-paper {
+    background: #ffffff;
+    color: #111827;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.receipt-header {
+    text-align: center;
+    border-bottom: 2px dashed #cbd5e1;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+}
+
+.receipt-meta div,
+.receipt-totals div {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+    color: #334155;
+}
+
+.receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 0.84rem;
+}
+
+.receipt-table th {
+    text-align: left;
+    border-bottom: 1px solid #cbd5e1;
+    padding: 6px 0;
+    color: #64748b;
+}
+
+.receipt-table td {
+    padding: 7px 0;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+}
+
+.receipt-totals {
+    border-top: 2px dashed #cbd5e1;
+    padding-top: 10px;
+}
+
+.receipt-grand-total {
+    font-size: 1.05rem !important;
+    font-weight: 800;
+    color: #0f172a !important;
+    margin-top: 6px;
+}
+
+.receipt-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.receipt-actions button {
+    flex: 1;
+    min-width: 110px;
+}
+
+@media print {
+    body.printing-receipt * {
+        visibility: hidden !important;
+    }
+    body.printing-receipt #receipt-printable,
+    body.printing-receipt #receipt-printable * {
+        visibility: visible !important;
+    }
+    body.printing-receipt #receipt-printable {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        border: none;
+    }
+}
+
+
 

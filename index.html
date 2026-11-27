@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Hojas de Estilos Personalizadas -->
     <link rel="stylesheet" href="style.css">
+    <!-- Google Identity Services (RF02) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <div class="overlay"></div>
@@ -42,10 +44,10 @@
             <!-- Formulario de Iniciar Sesión (Login) -->
             <form id="form-login" class="auth-form active-form" onsubmit="handleAuth(event, 'login')">
                 <div class="input-group">
-                    <label for="login-username">Usuario</label>
+                    <label for="login-username">Usuario o Correo Electrónico</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-user input-icon"></i>
-                        <input type="text" id="login-username" placeholder="Ingresa tu usuario" required autocomplete="username">
+                        <input type="text" id="login-username" placeholder="Ingresa tu usuario o correo" required autocomplete="username">
                     </div>
                 </div>
                 <div class="input-group">
@@ -55,6 +57,11 @@
                         <input type="password" id="login-password" placeholder="Ingresa tu contraseña" required autocomplete="current-password">
                         <i class="fa-solid fa-eye-slash toggle-password" onclick="togglePasswordVisibility('login-password', this)"></i>
                     </div>
+                </div>
+                <div class="forgot-link-row">
+                    <button type="button" class="forgot-link-btn" onclick="openForgotModal()">
+                        ¿Olvidaste tu contraseña?
+                    </button>
                 </div>
                 <button type="submit" class="submit-btn" id="btn-login-submit">
                     <span>Entrar a FoodExpress</span>
@@ -68,7 +75,14 @@
                     <label for="register-username">Nuevo Usuario</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-user input-icon"></i>
-                        <input type="text" id="register-username" placeholder="Crea tu usuario" required autocomplete="new-password">
+                        <input type="text" id="register-username" placeholder="Crea tu usuario" required autocomplete="username">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="register-email">Correo Electrónico</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input type="email" id="register-email" placeholder="ejemplo@correo.com" required autocomplete="email">
                     </div>
                 </div>
                 <div class="input-group">
@@ -82,6 +96,60 @@
                 <button type="submit" class="submit-btn" id="btn-register-submit">
                     <span>Crear Cuenta</span>
                     <i class="fa-solid fa-user-check"></i>
+                </button>
+            </form>
+
+            <!-- Separador e Inicio con Google (RF02) -->
+            <div class="auth-divider"><span>o continúa con</span></div>
+            <div id="google-signin-wrapper" class="google-signin-wrapper">
+                <div class="google-fallback-note">Cargando acceso con Google...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RECUPERACIÓN DE CONTRASEÑA (RF04) -->
+    <div class="order-modal-backdrop" id="forgot-modal-backdrop" onclick="if(event.target===this) closeForgotModal()">
+        <div class="order-modal-card forgot-card">
+            <div class="my-orders-header">
+                <h3><i class="fa-solid fa-key" style="color:var(--primary);"></i> Recuperar Contraseña</h3>
+                <button class="custom-modal-close static-close" onclick="closeForgotModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="forgot-subtitle">Ingresa tu correo electrónico registrado para recibir un código de verificación de 6 dígitos.</p>
+
+            <form id="form-forgot-step1" onsubmit="sendRecoveryCode(event)">
+                <div class="input-group">
+                    <label for="forgot-email">Correo Electrónico</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope input-icon"></i>
+                        <input type="email" id="forgot-email" placeholder="tu@correo.com" required>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn" style="width:100%;" id="btn-send-code">
+                    <span>Enviar Código al Correo</span>
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+
+            <form id="form-forgot-step2" onsubmit="submitPasswordReset(event)" style="display:none;margin-top:14px;">
+                <div class="input-group">
+                    <label for="reset-code">Código de 6 dígitos</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input type="text" id="reset-code" placeholder="Ej: 482910" maxlength="6" required>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="reset-new-password">Nueva Contraseña</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" id="reset-new-password" placeholder="Mínimo 4 caracteres" required>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn" style="width:100%;" id="btn-reset-pass">
+                    <span>Restablecer Contraseña</span>
+                    <i class="fa-solid fa-check"></i>
                 </button>
             </form>
         </div>
@@ -223,6 +291,20 @@
                 </div>
 
                 <div class="kiosk-cart-footer">
+                    <div class="payment-method-box">
+                        <label class="payment-label">Método de Pago</label>
+                        <div class="payment-options">
+                            <button type="button" class="pay-opt-btn active" onclick="selectPaymentMethod('Efectivo', this)">
+                                <i class="fa-solid fa-money-bill-wave"></i> Efectivo
+                            </button>
+                            <button type="button" class="pay-opt-btn" onclick="selectPaymentMethod('Tarjeta', this)">
+                                <i class="fa-solid fa-credit-card"></i> Tarjeta
+                            </button>
+                            <button type="button" class="pay-opt-btn" onclick="selectPaymentMethod('Nequi / Transferencia', this)">
+                                <i class="fa-solid fa-mobile-screen-button"></i> Nequi
+                            </button>
+                        </div>
+                    </div>
                     <div class="cart-summary-row">
                         <span>Subtotal:</span>
                         <span id="cart-subtotal">$ 0</span>
@@ -337,18 +419,58 @@
                     <strong id="modal-order-user">Usuario</strong>
                 </div>
                 <div>
+                    <span>Método de Pago:</span>
+                    <strong id="modal-order-payment">Efectivo</strong>
+                </div>
+                <div>
+                    <span>Estado del Pago:</span>
+                    <strong id="modal-order-paystatus">Pendiente</strong>
+                </div>
+                <div>
                     <span>Tiempo estimado:</span>
                     <strong>25 - 35 minutos 🛵</strong>
                 </div>
                 <div>
-                    <span>Total Pagado:</span>
+                    <span>Total a Pagar:</span>
                     <strong id="modal-order-total" style="color: var(--success);">$0</strong>
                 </div>
             </div>
 
-            <button class="order-modal-btn" onclick="closeOrderModal()">
-                <span>Continuar Viendo el Menú</span>
-            </button>
+            <div style="display:flex;gap:10px;flex-direction:column;">
+                <button class="order-modal-btn" style="background:linear-gradient(135deg,#1877c9,#2563eb);" onclick="openCurrentReceipt()">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Ver / Descargar Comprobante
+                </button>
+                <button class="order-modal-btn" onclick="closeOrderModal()">
+                    <span>Continuar Viendo el Menú</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL COMPROBANTE DE PAGO (RF33) -->
+    <div class="order-modal-backdrop" id="receipt-modal-backdrop" onclick="if(event.target===this) closeReceiptModal()">
+        <div class="order-modal-card receipt-modal-card">
+            <div id="receipt-printable" class="receipt-paper">
+                <div class="receipt-header">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+                        <i class="fa-solid fa-burger" style="color:#ff5e36;font-size:1.5rem;"></i>
+                        <h3 style="margin:0;color:#111827;">FoodExpress</h3>
+                    </div>
+                    <p style="margin:4px 0 0;color:#64748b;font-size:0.8rem;">Comprobante Oficial de Compra</p>
+                </div>
+                <div id="receipt-body" class="receipt-body"></div>
+            </div>
+            <div class="receipt-actions">
+                <button type="button" class="cm-btn-add" onclick="printReceipt()">
+                    <i class="fa-solid fa-print"></i> Imprimir / Guardar PDF
+                </button>
+                <button type="button" class="cm-btn-add" style="background:#10b981;" onclick="downloadReceiptHtml()">
+                    <i class="fa-solid fa-download"></i> Descargar Archivo
+                </button>
+                <button type="button" class="cm-btn-cancel" onclick="closeReceiptModal()">
+                    Cerrar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -728,11 +850,17 @@
         let activeModalProduct = null;
         let activeModalQty = 1;
         let activeModalSelections = {};
+        let selectedPaymentMethod = 'Efectivo';
+        let shippingFee = 4000;
+        let freeShippingMin = 30000;
+        let lastConfirmedReceipt = null;
+        let myOrdersCache = [];
 
         // ==========================================
         // MANEJO DE VISTAS (LOGIN / MENÚ / COCINA)
         // ==========================================
         window.addEventListener('DOMContentLoaded', () => {
+            initGoogleSignIn();
             const savedSession = sessionStorage.getItem('foodexpress_user');
             if (savedSession) {
                 try {
@@ -765,6 +893,23 @@
             if (ap) ap.style.display = 'none';
         }
 
+        async function fetchShippingTariffs() {
+            try {
+                const res = await fetch(`${API_BASE}/api/finanzas/tarifas`);
+                if (res.ok) {
+                    const t = await res.json();
+                    shippingFee = Number(t.tarifa_envio ?? 4000);
+                    freeShippingMin = Number(t.minimo_envio_gratis ?? 30000);
+                    const displayName = document.getElementById('logged-username').innerText || 'Cliente';
+                    document.getElementById('hero-username-greeting').innerText =
+                        `¡Hola ${displayName}! Envío gratis desde ${formatMoney(freeShippingMin)} · Domicilio ${formatMoney(shippingFee)}`;
+                    updateCartUI();
+                }
+            } catch (e) {
+                // Mantiene valores por defecto
+            }
+        }
+
         function showMenuScreen(username) {
             document.getElementById('auth-container').classList.add('hidden');
             document.getElementById('menu-view').classList.add('active-view');
@@ -773,10 +918,12 @@
             const displayName = username || "Cliente FoodExpress";
             document.getElementById('logged-username').innerText = displayName;
             document.getElementById('user-avatar-letter').innerText = displayName.charAt(0).toUpperCase();
-            document.getElementById('hero-username-greeting').innerText = `¡Hola ${displayName}! Envío gratis desde $30.000`;
+            document.getElementById('hero-username-greeting').innerText =
+                `¡Hola ${displayName}! Envío gratis desde ${formatMoney(freeShippingMin)}`;
 
             renderProducts();
             updateCartUI();
+            fetchShippingTariffs();
         }
 
         function toggleKioskTheme() {
@@ -1129,7 +1276,7 @@
             checkoutBtn.disabled = false;
 
             const subtotal = shoppingCart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
-            const shipping = subtotal >= 30000 ? 0 : 4000;
+            const shipping = subtotal >= freeShippingMin ? 0 : shippingFee;
             const total = subtotal + shipping;
 
             subtotalEl.innerText = formatMoney(subtotal);
@@ -1157,8 +1304,14 @@
             `).join('');
         }
 
+        function selectPaymentMethod(method, btn) {
+            selectedPaymentMethod = method;
+            document.querySelectorAll('.pay-opt-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+        }
+
         // ==========================================
-        // SEGUIMIENTO EN VIVO: MIS PEDIDOS (CLIENTE)
+        // SEGUIMIENTO EN VIVO: MIS PEDIDOS Y COMPROBANTES
         // ==========================================
         function openMyOrdersModal() {
             document.getElementById('my-orders-modal-backdrop').classList.add('open');
@@ -1179,9 +1332,11 @@
                 });
                 const pedidos = await res.json();
                 if (!Array.isArray(pedidos) || pedidos.length === 0) {
+                    myOrdersCache = [];
                     list.innerHTML = '<p style="color:#a0a0ab;padding:24px;">Aún no has realizado pedidos en FoodExpress.</p>';
                     return;
                 }
+                myOrdersCache = pedidos;
                 const colors = { Pendiente: '#e3b341', Cocinando: '#388bfd', Enviado: '#3fb950', Entregado: '#8b949e' };
                 list.innerHTML = pedidos.map(p => `
                     <div class="my-order-row">
@@ -1189,10 +1344,13 @@
                             <strong>#FE-${p.id}</strong>
                             <span class="my-order-status" style="color:${colors[p.estado] || '#ccc'};border-color:${colors[p.estado] || '#555'};">${p.estado}</span>
                         </div>
-                        <small>${new Date(p.fecha_creacion).toLocaleString('es-CO')} · <strong>${formatMoney(p.total)}</strong></small>
+                        <small>${new Date(p.fecha_creacion).toLocaleString('es-CO')} · <strong>${formatMoney(p.total)}</strong> · ${p.metodo_pago || 'Efectivo'} (${p.estado_pago || 'Pagado'})</small>
                         <ul>
                             ${(p.items || []).map(it => `<li>${it.cantidad}× ${it.nombre}</li>`).join('')}
                         </ul>
+                        <button type="button" class="my-order-receipt-btn" onclick="openReceiptByOrderId(${p.id})">
+                            <i class="fa-solid fa-file-invoice-dollar"></i> Ver / Descargar Comprobante
+                        </button>
                     </div>
                 `).join('');
             } catch (err) {
@@ -1201,18 +1359,32 @@
         }
 
         // ==========================================
-        // PROCESO DE CHECKOUT / PEDIDO CONFIRMADO
+        // PROCESO DE CHECKOUT / COMPROBANTE DE PAGO (RF16, RF33)
         // ==========================================
-        function openOrderModal(realId) {
+        function openOrderModal(orderInfo) {
             const currentUser = document.getElementById('logged-username').innerText;
-            const currentTotal = document.getElementById('cart-total').innerText;
-            const displayId = realId || Math.floor(1000 + Math.random() * 9000);
+            const info = (typeof orderInfo === 'object' && orderInfo !== null)
+                ? orderInfo
+                : { pedidoId: orderInfo, total: 0, metodo_pago: selectedPaymentMethod, estado_pago: 'Pendiente' };
 
-            document.getElementById('modal-order-id').innerText = `#FE-${displayId}`;
+            lastConfirmedReceipt = {
+                id: info.pedidoId,
+                cliente: currentUser,
+                fecha: new Date().toLocaleString('es-CO'),
+                metodo_pago: info.metodo_pago || selectedPaymentMethod,
+                estado_pago: info.estado_pago || 'Pendiente',
+                subtotal: Number(info.subtotal ?? 0),
+                costo_envio: Number(info.costo_envio ?? 0),
+                total: Number(info.total ?? 0),
+                items: info.items || []
+            };
+
+            document.getElementById('modal-order-id').innerText = `#FE-${lastConfirmedReceipt.id}`;
             document.getElementById('modal-order-user').innerText = currentUser;
-            document.getElementById('modal-order-total').innerText = currentTotal;
+            document.getElementById('modal-order-payment').innerText = lastConfirmedReceipt.metodo_pago;
+            document.getElementById('modal-order-paystatus').innerText = lastConfirmedReceipt.estado_pago;
+            document.getElementById('modal-order-total').innerText = formatMoney(lastConfirmedReceipt.total);
 
-            // Cerrar drawer y abrir modal
             toggleCartDrawer(false);
             document.getElementById('order-modal-backdrop').classList.add('open');
         }
@@ -1220,6 +1392,89 @@
         function closeOrderModal() {
             document.getElementById('order-modal-backdrop').classList.remove('open');
             showToast("¡Pedido en preparación! Te notificaremos cuando llegue el repartidor.", "success");
+        }
+
+        function openCurrentReceipt() {
+            if (lastConfirmedReceipt) {
+                openReceiptModal(lastConfirmedReceipt);
+            }
+        }
+
+        function openReceiptByOrderId(orderId) {
+            const p = myOrdersCache.find(o => o.id === orderId);
+            if (!p) return;
+            openReceiptModal({
+                id: p.id,
+                cliente: p.cliente_nombre,
+                fecha: new Date(p.fecha_creacion).toLocaleString('es-CO'),
+                metodo_pago: p.metodo_pago || 'Efectivo',
+                estado_pago: p.estado_pago || 'Pagado',
+                subtotal: Number(p.subtotal || p.total || 0),
+                costo_envio: Number(p.costo_envio || 0),
+                total: Number(p.total || 0),
+                items: (p.items || []).map(it => ({
+                    nombre: it.nombre,
+                    cantidad: it.cantidad,
+                    precio: Number(it.precio || 0)
+                }))
+            });
+        }
+
+        function openReceiptModal(receipt) {
+            lastConfirmedReceipt = receipt;
+            const body = document.getElementById('receipt-body');
+            const rowsHtml = (receipt.items || []).map(it => `
+                <tr>
+                    <td>${it.cantidad}× ${it.nombre}</td>
+                    <td style="text-align:right;white-space:nowrap;">${formatMoney(Number(it.precio || 0) * Number(it.cantidad || 1))}</td>
+                </tr>
+            `).join('');
+
+            body.innerHTML = `
+                <div class="receipt-meta">
+                    <div><span>Orden:</span><strong>#FE-${receipt.id}</strong></div>
+                    <div><span>Fecha:</span><strong>${receipt.fecha}</strong></div>
+                    <div><span>Cliente:</span><strong>${receipt.cliente}</strong></div>
+                    <div><span>Método de Pago:</span><strong>${receipt.metodo_pago}</strong></div>
+                    <div><span>Estado del Pago:</span><strong>${receipt.estado_pago}</strong></div>
+                </div>
+                <table class="receipt-table">
+                    <thead><tr><th>Descripción</th><th style="text-align:right;">Valor</th></tr></thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+                <div class="receipt-totals">
+                    <div><span>Subtotal Productos:</span><span>${formatMoney(receipt.subtotal)}</span></div>
+                    <div><span>Costo de Envío:</span><span>${receipt.costo_envio === 0 ? 'GRATIS' : formatMoney(receipt.costo_envio)}</span></div>
+                    <div class="receipt-grand-total"><span>Total:</span><span>${formatMoney(receipt.total)}</span></div>
+                </div>
+            `;
+            document.getElementById('receipt-modal-backdrop').classList.add('open');
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receipt-modal-backdrop').classList.remove('open');
+        }
+
+        function printReceipt() {
+            document.body.classList.add('printing-receipt');
+            window.print();
+            setTimeout(() => document.body.classList.remove('printing-receipt'), 500);
+        }
+
+        function downloadReceiptHtml() {
+            if (!lastConfirmedReceipt) return;
+            const content = document.getElementById('receipt-printable').innerHTML;
+            const fullDoc = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Comprobante #FE-${lastConfirmedReceipt.id}</title>
+                <style>body{font-family:Arial,sans-serif;padding:24px;background:#f8fafc;color:#111827;}.paper{max-width:440px;margin:0 auto;background:#fff;padding:24px;border:1px solid #cbd5e1;border-radius:12px;}table{width:100%;border-collapse:collapse;margin:14px 0;}th,td{padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px;text-align:left;}.receipt-meta div,.receipt-totals div{display:flex;justify-content:space-between;margin:6px 0;font-size:13px;}.receipt-grand-total{font-size:16px;font-weight:bold;border-top:2px solid #111827;padding-top:8px;margin-top:8px;}</style>
+                </head><body><div class="paper">${content}</div></body></html>`;
+            const blob = new Blob([fullDoc], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Comprobante_FE-${lastConfirmedReceipt.id}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`Comprobante #FE-${lastConfirmedReceipt.id} descargado`, "success");
         }
 
         // ==========================================
@@ -1299,9 +1554,10 @@
                 bodyData = { usuario: usuarioVal, contraseña: contrasenaVal };
             } else {
                 const usuarioVal = document.getElementById('register-username').value;
+                const correoVal = document.getElementById('register-email').value;
                 const contrasenaVal = document.getElementById('register-password').value;
                 url = `${API_BASE}/api/register`;
-                bodyData = { usuario: usuarioVal, contraseña: contrasenaVal };
+                bodyData = { usuario: usuarioVal, correo: correoVal, contraseña: contrasenaVal };
             }
 
             try {
@@ -1351,6 +1607,145 @@
             } catch (err) {
                 showToast("No se pudo conectar con el servidor de FoodExpress", "error");
                 console.error(err);
+            }
+        }
+
+        // ==========================================
+        // GOOGLE SIGN-IN (RF02) & RECUPERACIÓN POR CORREO (RF04)
+        // ==========================================
+        async function initGoogleSignIn() {
+            const wrapper = document.getElementById('google-signin-wrapper');
+            if (!wrapper) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/google-config`);
+                const data = await res.json();
+                if (!data.clientId) {
+                    wrapper.innerHTML = `<button type="button" class="google-placeholder-btn" onclick="showToast('Configura GOOGLE_CLIENT_ID en Render para habilitar el acceso con Google.', 'info')">
+                        <i class="fa-brands fa-google"></i> Continuar con Google (requiere Client ID)
+                    </button>`;
+                    return;
+                }
+
+                const waitForGsi = setInterval(() => {
+                    if (window.google && google.accounts && google.accounts.id) {
+                        clearInterval(waitForGsi);
+                        google.accounts.id.initialize({
+                            client_id: data.clientId,
+                            callback: handleGoogleCredentialResponse
+                        });
+                        wrapper.innerHTML = '';
+                        google.accounts.id.renderButton(wrapper, {
+                            theme: 'filled_black',
+                            size: 'large',
+                            width: 340,
+                            text: 'continue_with',
+                            shape: 'pill'
+                        });
+                    }
+                }, 250);
+                setTimeout(() => clearInterval(waitForGsi), 8000);
+            } catch (err) {
+                wrapper.innerHTML = `<button type="button" class="google-placeholder-btn" onclick="showToast('Google Sign-In no disponible ahora', 'info')">
+                    <i class="fa-brands fa-google"></i> Continuar con Google
+                </button>`;
+            }
+        }
+
+        async function handleGoogleCredentialResponse(response) {
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    sessionStorage.setItem('foodexpress_user', JSON.stringify({
+                        usuario: data.usuario,
+                        correo: data.correo,
+                        token: data.token,
+                        rol: data.rol || 'cliente'
+                    }));
+                    showToast(`¡Bienvenido con Google, ${data.usuario}!`, "success");
+                    showMenuScreen(data.usuario);
+                } else {
+                    showToast(data.error || "Error en login con Google", "error");
+                }
+            } catch (err) {
+                showToast("Error conectando con Google Auth: " + err.message, "error");
+            }
+        }
+
+        function openForgotModal() {
+            document.getElementById('form-forgot-step1').style.display = 'block';
+            document.getElementById('form-forgot-step2').style.display = 'none';
+            document.getElementById('forgot-email').value = '';
+            document.getElementById('reset-code').value = '';
+            document.getElementById('reset-new-password').value = '';
+            document.getElementById('forgot-modal-backdrop').classList.add('open');
+        }
+
+        function closeForgotModal() {
+            document.getElementById('forgot-modal-backdrop').classList.remove('open');
+        }
+
+        async function sendRecoveryCode(event) {
+            event.preventDefault();
+            const correo = document.getElementById('forgot-email').value.trim();
+            const btn = document.getElementById('btn-send-code');
+            const prev = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+            try {
+                const res = await fetch(`${API_BASE}/api/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo })
+                });
+                const data = await res.json();
+                btn.disabled = false;
+                btn.innerHTML = prev;
+                if (res.ok) {
+                    showToast(data.mensaje || "Código enviado a tu correo", "success");
+                    document.getElementById('form-forgot-step2').style.display = 'block';
+                } else {
+                    showToast(data.error || "No se pudo enviar el código", "error");
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = prev;
+                showToast("Error: " + err.message, "error");
+            }
+        }
+
+        async function submitPasswordReset(event) {
+            event.preventDefault();
+            const correo = document.getElementById('forgot-email').value.trim();
+            const codigo = document.getElementById('reset-code').value.trim();
+            const nuevaContrasena = document.getElementById('reset-new-password').value;
+            const btn = document.getElementById('btn-reset-pass');
+            const prev = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Actualizando...';
+            try {
+                const res = await fetch(`${API_BASE}/api/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo, codigo, nuevaContrasena })
+                });
+                const data = await res.json();
+                btn.disabled = false;
+                btn.innerHTML = prev;
+                if (res.ok) {
+                    showToast(data.mensaje || "Contraseña restablecida", "success");
+                    closeForgotModal();
+                } else {
+                    showToast(data.error || "No se pudo restablecer", "error");
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = prev;
+                showToast("Error: " + err.message, "error");
             }
         }
 
@@ -1560,12 +1955,15 @@
 
                     <!-- Tabs -->
                     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
-                        <div style="display:flex;gap:10px;">
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
                             <button id="admin-tab-usuarios" onclick="switchAdminTab('usuarios')" style="background:#1f6feb;border:1px solid #388bfd;color:#fff;padding:10px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.9rem;">
                                 <i class="fa-solid fa-users-gear"></i> Gestión de Usuarios y Roles
                             </button>
                             <button id="admin-tab-pedidos" onclick="switchAdminTab('pedidos')" style="background:#161b22;border:1px solid #30363d;color:#c9d1d9;padding:10px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.9rem;">
                                 <i class="fa-solid fa-receipt"></i> Todos los Pedidos
+                            </button>
+                            <button id="admin-tab-finanzas" onclick="switchAdminTab('finanzas')" style="background:#161b22;border:1px solid #30363d;color:#c9d1d9;padding:10px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.9rem;">
+                                <i class="fa-solid fa-chart-line"></i> Finanzas y Reportes
                             </button>
                         </div>
                         <button onclick="cargarAdminDatos()" style="background:#238636;border:none;color:#fff;padding:9px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:600;font-size:0.88rem;">
@@ -1575,13 +1973,17 @@
 
                     <!-- Vista Usuarios -->
                     <section id="admin-section-usuarios">
-                        <form onsubmit="crearUsuarioAdmin(event)" style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;align-items:end;">
+                        <form onsubmit="crearUsuarioAdmin(event)" style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end;">
                             <div>
                                 <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Nuevo Usuario</label>
                                 <input id="admin-new-user" type="text" required placeholder="Ej: operador2" style="width:100%;padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
                             </div>
                             <div>
-                                <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Contraseña (se encripta con bcrypt)</label>
+                                <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Correo (opcional)</label>
+                                <input id="admin-new-email" type="email" placeholder="correo@ejemplo.com" style="width:100%;padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Contraseña (bcrypt)</label>
                                 <input id="admin-new-pass" type="password" required placeholder="Mínimo 4 caracteres" style="width:100%;padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
                             </div>
                             <div>
@@ -1603,13 +2005,14 @@
                                     <tr style="background:#21262d;color:#8b949e;border-bottom:1px solid #30363d;">
                                         <th style="padding:12px 16px;">ID</th>
                                         <th style="padding:12px 16px;">Usuario</th>
+                                        <th style="padding:12px 16px;">Correo</th>
                                         <th style="padding:12px 16px;">Rol Actual</th>
                                         <th style="padding:12px 16px;">Cambiar Rol</th>
                                         <th style="padding:12px 16px;text-align:right;">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-users-tbody">
-                                    <tr><td colspan="5" style="padding:20px;color:#8b949e;">Cargando usuarios...</td></tr>
+                                    <tr><td colspan="6" style="padding:20px;color:#8b949e;">Cargando usuarios...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1621,45 +2024,154 @@
                             <p style="color:#8b949e;">Cargando pedidos...</p>
                         </div>
                     </section>
+
+                    <!-- Vista Finanzas y Reportes (RF34 - RF37) -->
+                    <section id="admin-section-finanzas" style="display:none;">
+                        <!-- Configuración de Tarifas de Domicilio (RF37) -->
+                        <form onsubmit="guardarTarifasDomicilio(event)" style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin-bottom:20px;">
+                            <h4 style="margin:0 0 12px;color:#fff;font-size:1.05rem;"><i class="fa-solid fa-motorcycle" style="color:#ff5e36;"></i> Configuración de Tarifas de Domicilio (RF37)</h4>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end;">
+                                <div>
+                                    <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Tarifa de Domicilio ($ COP)</label>
+                                    <input id="fin-tarifa-envio" type="number" min="0" step="100" required style="width:100%;padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
+                                </div>
+                                <div>
+                                    <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Monto Mínimo Envío Gratis ($ COP)</label>
+                                    <input id="fin-minimo-gratis" type="number" min="0" step="500" required style="width:100%;padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
+                                </div>
+                                <button type="submit" style="background:#ff5e36;border:none;color:#fff;padding:11px 18px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:700;">
+                                    <i class="fa-solid fa-floppy-disk"></i> Guardar Tarifas
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Filtros de Periodo y Exportación (RF35 / RF36) -->
+                        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin-bottom:20px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+                                <h4 style="margin:0;color:#fff;font-size:1.05rem;"><i class="fa-solid fa-calendar-days" style="color:#58a6ff;"></i> Reporte Financiero por Periodo (RF35 - RF36)</h4>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                    <button type="button" onclick="setPeriodoPreset('hoy')" style="background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;">Hoy</button>
+                                    <button type="button" onclick="setPeriodoPreset('semana')" style="background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;">Últimos 7 días</button>
+                                    <button type="button" onclick="setPeriodoPreset('mes')" style="background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;">Este mes</button>
+                                    <button type="button" onclick="setPeriodoPreset('todo')" style="background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.82rem;">Todo</button>
+                                </div>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end;">
+                                <div>
+                                    <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Desde</label>
+                                    <input id="fin-desde" type="date" style="width:100%;padding:9px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
+                                </div>
+                                <div>
+                                    <label style="display:block;font-size:0.8rem;color:#8b949e;margin-bottom:6px;">Hasta</label>
+                                    <input id="fin-hasta" type="date" style="width:100%;padding:9px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;">
+                                </div>
+                                <button type="button" onclick="cargarReporteFinanciero()" style="background:#1f6feb;border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:700;">
+                                    <i class="fa-solid fa-filter"></i> Consultar
+                                </button>
+                                <button type="button" onclick="exportarReporteCSV()" style="background:#238636;border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:700;">
+                                    <i class="fa-solid fa-file-csv"></i> Exportar CSV
+                                </button>
+                                <button type="button" onclick="imprimirReporteFinanciero()" style="background:#a855f7;border:none;color:#fff;padding:10px 14px;border-radius:8px;cursor:pointer;font-family:Outfit,sans-serif;font-weight:700;">
+                                    <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+                                </button>
+                            </div>
+
+                            <!-- Resumen del Periodo -->
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px;">
+                                <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:14px;">
+                                    <span style="color:#8b949e;font-size:0.78rem;">Ingresos Productos</span>
+                                    <h4 id="fin-kpi-productos" style="margin:4px 0 0;font-size:1.3rem;color:#58a6ff;">$ 0</h4>
+                                </div>
+                                <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:14px;">
+                                    <span style="color:#8b949e;font-size:0.78rem;">Costos de Envío</span>
+                                    <h4 id="fin-kpi-envios" style="margin:4px 0 0;font-size:1.3rem;color:#e3b341;">$ 0</h4>
+                                </div>
+                                <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:14px;">
+                                    <span style="color:#8b949e;font-size:0.78rem;">Ventas Totales Periodo</span>
+                                    <h4 id="fin-kpi-total" style="margin:4px 0 0;font-size:1.3rem;color:#3fb950;">$ 0</h4>
+                                </div>
+                                <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:14px;">
+                                    <span style="color:#8b949e;font-size:0.78rem;">Pedidos en Periodo</span>
+                                    <h4 id="fin-kpi-count" style="margin:4px 0 0;font-size:1.3rem;color:#d8b4fe;">0</h4>
+                                </div>
+                            </div>
+                            <div id="fin-metodos-breakdown" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;font-size:0.84rem;color:#c9d1d9;"></div>
+                        </div>
+
+                        <!-- Historial de Transacciones (RF34) -->
+                        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;overflow-x:auto;">
+                            <div style="padding:14px 16px;border-bottom:1px solid #30363d;">
+                                <h4 style="margin:0;color:#fff;font-size:1rem;"><i class="fa-solid fa-money-check-dollar" style="color:#3fb950;"></i> Historial de Transacciones de Pago (RF34)</h4>
+                            </div>
+                            <table style="width:100%;border-collapse:collapse;text-align:left;font-size:0.86rem;">
+                                <thead>
+                                    <tr style="background:#21262d;color:#8b949e;border-bottom:1px solid #30363d;">
+                                        <th style="padding:10px 14px;">Orden</th>
+                                        <th style="padding:10px 14px;">Fecha</th>
+                                        <th style="padding:10px 14px;">Cliente</th>
+                                        <th style="padding:10px 14px;">Método</th>
+                                        <th style="padding:10px 14px;">Subtotal</th>
+                                        <th style="padding:10px 14px;">Envío</th>
+                                        <th style="padding:10px 14px;">Total</th>
+                                        <th style="padding:10px 14px;">Estado Pago</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fin-trans-tbody">
+                                    <tr><td colspan="8" style="padding:20px;color:#8b949e;">Cargando transacciones...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 </main>`;
             await cargarAdminDatos();
         }
 
         function switchAdminTab(tab) {
             adminActiveTab = tab;
-            const uSec = document.getElementById('admin-section-usuarios');
-            const pSec = document.getElementById('admin-section-pedidos');
-            const uBtn = document.getElementById('admin-tab-usuarios');
-            const pBtn = document.getElementById('admin-tab-pedidos');
-            if (tab === 'usuarios') {
-                uSec.style.display = 'block';
-                pSec.style.display = 'none';
-                uBtn.style.background = '#1f6feb';
-                uBtn.style.borderColor = '#388bfd';
-                pBtn.style.background = '#161b22';
-                pBtn.style.borderColor = '#30363d';
-            } else {
-                uSec.style.display = 'none';
-                pSec.style.display = 'block';
-                pBtn.style.background = '#1f6feb';
-                pBtn.style.borderColor = '#388bfd';
-                uBtn.style.background = '#161b22';
-                uBtn.style.borderColor = '#30363d';
+            const sections = {
+                usuarios: document.getElementById('admin-section-usuarios'),
+                pedidos: document.getElementById('admin-section-pedidos'),
+                finanzas: document.getElementById('admin-section-finanzas')
+            };
+            const buttons = {
+                usuarios: document.getElementById('admin-tab-usuarios'),
+                pedidos: document.getElementById('admin-tab-pedidos'),
+                finanzas: document.getElementById('admin-tab-finanzas')
+            };
+            Object.keys(sections).forEach(k => {
+                const active = k === tab;
+                sections[k].style.display = active ? 'block' : 'none';
+                buttons[k].style.background = active ? '#1f6feb' : '#161b22';
+                buttons[k].style.borderColor = active ? '#388bfd' : '#30363d';
+                buttons[k].style.color = active ? '#ffffff' : '#c9d1d9';
+            });
+            if (tab === 'finanzas') {
+                cargarReporteFinanciero();
             }
         }
+
+        let ultimoReporteFinanciero = null;
 
         async function cargarAdminDatos() {
             const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
             const headers = { 'Authorization': `Bearer ${session.token}` };
 
             try {
-                const [resUsers, resOrders] = await Promise.all([
+                const [resUsers, resOrders, resTarifas] = await Promise.all([
                     fetch(`${API_BASE}/api/usuarios`, { headers }),
-                    fetch(`${API_BASE}/api/pedidos`, { headers })
+                    fetch(`${API_BASE}/api/pedidos`, { headers }),
+                    fetch(`${API_BASE}/api/finanzas/tarifas`)
                 ]);
 
                 const usuarios = await resUsers.json();
                 const pedidos = await resOrders.json();
+                const tarifas = await resTarifas.json();
+
+                if (tarifas && document.getElementById('fin-tarifa-envio')) {
+                    document.getElementById('fin-tarifa-envio').value = tarifas.tarifa_envio ?? 4000;
+                    document.getElementById('fin-minimo-gratis').value = tarifas.minimo_envio_gratis ?? 30000;
+                }
 
                 if (Array.isArray(usuarios)) {
                     document.getElementById('kpi-usuarios').innerText = usuarios.length;
@@ -1673,6 +2185,7 @@
                         <tr style="border-bottom:1px solid #21262d;">
                             <td style="padding:12px 16px;color:#8b949e;">#${u.id}</td>
                             <td style="padding:12px 16px;font-weight:600;color:#fff;">${u.usuario}</td>
+                            <td style="padding:12px 16px;color:#8b949e;">${u.correo || '—'}</td>
                             <td style="padding:12px 16px;">
                                 <span style="${rolBadge[u.rol] || rolBadge.cliente}padding:3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;">${u.rol || 'cliente'}</span>
                             </td>
@@ -1693,7 +2206,7 @@
                 }
 
                 if (Array.isArray(pedidos)) {
-                    const totalVentas = pedidos.reduce((acc, p) => acc + Number(p.total || 0), 0);
+                    const totalVentas = pedidos.reduce((acc, p) => acc + (p.estado_pago === 'Reembolsado' ? 0 : Number(p.total || 0)), 0);
                     document.getElementById('kpi-pedidos').innerText = pedidos.length;
                     document.getElementById('kpi-ventas').innerText = formatMoney(totalVentas);
 
@@ -1717,9 +2230,12 @@
                                     <span style="${badgeStyle[p.estado] || ''}padding:3px 10px;border-radius:999px;font-size:0.76rem;font-weight:700;">${p.estado}</span>
                                 </div>
                                 <div style="padding:14px 16px;flex:1;">
-                                    <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
                                         <span style="color:#c9d1d9;font-size:0.88rem;"><i class="fa-solid fa-user"></i> ${p.cliente_nombre}</span>
                                         <strong style="color:#ff5e36;">${formatMoney(p.total)}</strong>
+                                    </div>
+                                    <div style="color:#8b949e;font-size:0.78rem;margin-bottom:8px;">
+                                        Pago: <strong>${p.metodo_pago || 'Efectivo'}</strong> · Estado pago: <strong>${p.estado_pago || 'Pagado'}</strong>
                                     </div>
                                     <ul style="margin:0 0 12px;padding-left:18px;font-size:0.85rem;color:#e6edf3;">
                                         ${(p.items || []).map(it => `<li>${it.cantidad}× ${it.nombre}</li>`).join('')}
@@ -1740,15 +2256,200 @@
                         `).join('');
                     }
                 }
+
+                if (adminActiveTab === 'finanzas') {
+                    await cargarReporteFinanciero();
+                }
             } catch (err) {
                 showToast("Error al cargar datos del panel admin: " + err.message, "error");
             }
+        }
+
+        function setPeriodoPreset(tipo) {
+            const hoy = new Date();
+            const fmt = (d) => d.toISOString().split('T')[0];
+            const dEl = document.getElementById('fin-desde');
+            const hEl = document.getElementById('fin-hasta');
+            if (tipo === 'hoy') {
+                dEl.value = fmt(hoy);
+                hEl.value = fmt(hoy);
+            } else if (tipo === 'semana') {
+                const ini = new Date(hoy);
+                ini.setDate(hoy.getDate() - 6);
+                dEl.value = fmt(ini);
+                hEl.value = fmt(hoy);
+            } else if (tipo === 'mes') {
+                const ini = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+                dEl.value = fmt(ini);
+                hEl.value = fmt(hoy);
+            } else {
+                dEl.value = '';
+                hEl.value = '';
+            }
+            cargarReporteFinanciero();
+        }
+
+        async function cargarReporteFinanciero() {
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            const desde = document.getElementById('fin-desde')?.value || '';
+            const hasta = document.getElementById('fin-hasta')?.value || '';
+            const qs = new URLSearchParams();
+            if (desde) qs.append('desde', desde);
+            if (hasta) qs.append('hasta', hasta);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/finanzas/reporte?${qs.toString()}`, {
+                    headers: { 'Authorization': `Bearer ${session.token}` }
+                });
+                const rep = await res.json();
+                if (!res.ok) {
+                    showToast(rep.error || "Error al consultar finanzas", "error");
+                    return;
+                }
+                ultimoReporteFinanciero = rep;
+
+                document.getElementById('fin-kpi-productos').innerText = formatMoney(rep.resumen.ingresosProductos);
+                document.getElementById('fin-kpi-envios').innerText = formatMoney(rep.resumen.ingresosEnvio);
+                document.getElementById('fin-kpi-total').innerText = formatMoney(rep.resumen.ventasTotales);
+                document.getElementById('fin-kpi-count').innerText = rep.resumen.totalPedidos;
+
+                const breakdown = document.getElementById('fin-metodos-breakdown');
+                const metEntries = Object.entries(rep.porMetodo || {});
+                breakdown.innerHTML = metEntries.length
+                    ? metEntries.map(([m, info]) => `<span style="background:#0d1117;border:1px solid #30363d;padding:5px 12px;border-radius:999px;"><strong>${m}:</strong> ${info.cantidad} ped. (${formatMoney(info.total)})</span>`).join('')
+                    : '<span>Sin ventas válidas en el periodo seleccionado.</span>';
+
+                const tbody = document.getElementById('fin-trans-tbody');
+                if (!rep.pedidos || rep.pedidos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="padding:20px;color:#8b949e;">No hay transacciones en este periodo.</td></tr>';
+                } else {
+                    tbody.innerHTML = rep.pedidos.map(p => `
+                        <tr style="border-bottom:1px solid #21262d;">
+                            <td style="padding:10px 14px;font-weight:700;color:#fff;">#FE-${p.id}</td>
+                            <td style="padding:10px 14px;color:#8b949e;">${new Date(p.fecha_creacion).toLocaleString('es-CO')}</td>
+                            <td style="padding:10px 14px;color:#e6edf3;">${p.cliente_nombre}</td>
+                            <td style="padding:10px 14px;color:#58a6ff;">${p.metodo_pago || 'Efectivo'}</td>
+                            <td style="padding:10px 14px;">${formatMoney(p.subtotal || p.total)}</td>
+                            <td style="padding:10px 14px;">${formatMoney(p.costo_envio || 0)}</td>
+                            <td style="padding:10px 14px;font-weight:700;color:#3fb950;">${formatMoney(p.total)}</td>
+                            <td style="padding:10px 14px;">
+                                <select onchange="cambiarEstadoPagoAdmin(${p.id}, this.value)" style="padding:5px 8px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;font-size:0.8rem;">
+                                    <option value="Pagado" ${p.estado_pago === 'Pagado' ? 'selected' : ''}>Pagado</option>
+                                    <option value="Pendiente" ${p.estado_pago === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                                    <option value="Reembolsado" ${p.estado_pago === 'Reembolsado' ? 'selected' : ''}>Reembolsado</option>
+                                </select>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (err) {
+                showToast("Error cargando reporte: " + err.message, "error");
+            }
+        }
+
+        async function guardarTarifasDomicilio(event) {
+            event.preventDefault();
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            const tarifa_envio = Number(document.getElementById('fin-tarifa-envio').value);
+            const minimo_envio_gratis = Number(document.getElementById('fin-minimo-gratis').value);
+            try {
+                const res = await fetch(`${API_BASE}/api/finanzas/tarifas`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.token}` },
+                    body: JSON.stringify({ tarifa_envio, minimo_envio_gratis })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    shippingFee = tarifa_envio;
+                    freeShippingMin = minimo_envio_gratis;
+                    showToast("Tarifas de domicilio actualizadas", "success");
+                } else {
+                    showToast(data.error || "Error al guardar tarifas", "error");
+                }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+            }
+        }
+
+        async function cambiarEstadoPagoAdmin(pedidoId, estado_pago) {
+            const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
+            try {
+                const res = await fetch(`${API_BASE}/api/finanzas/transacciones/${pedidoId}/pago`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.token}` },
+                    body: JSON.stringify({ estado_pago })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`Pago de #FE-${pedidoId} → ${estado_pago}`, "success");
+                    await cargarReporteFinanciero();
+                } else {
+                    showToast(data.error || "Error al actualizar pago", "error");
+                }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+            }
+        }
+
+        function exportarReporteCSV() {
+            if (!ultimoReporteFinanciero || !ultimoReporteFinanciero.pedidos || ultimoReporteFinanciero.pedidos.length === 0) {
+                showToast("No hay datos financieros en el periodo para exportar.", "info");
+                return;
+            }
+            const headers = ['Orden', 'Fecha', 'Cliente', 'Metodo_Pago', 'Estado_Pago', 'Estado_Pedido', 'Subtotal', 'Costo_Envio', 'Total'];
+            const lines = [headers.join(',')];
+            for (const p of ultimoReporteFinanciero.pedidos) {
+                lines.push([
+                    `#FE-${p.id}`,
+                    `"${new Date(p.fecha_creacion).toLocaleString('es-CO')}"`,
+                    `"${p.cliente_nombre}"`,
+                    `"${p.metodo_pago || 'Efectivo'}"`,
+                    `"${p.estado_pago || 'Pagado'}"`,
+                    `"${p.estado}"`,
+                    Number(p.subtotal || p.total || 0),
+                    Number(p.costo_envio || 0),
+                    Number(p.total || 0)
+                ].join(','));
+            }
+            lines.push('');
+            lines.push(`Ingresos Productos,,,,,,,${ultimoReporteFinanciero.resumen.ingresosProductos}`);
+            lines.push(`Costos de Envio,,,,,,,${ultimoReporteFinanciero.resumen.ingresosEnvio}`);
+            lines.push(`Ventas Totales,,,,,,,${ultimoReporteFinanciero.resumen.ventasTotales}`);
+
+            const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Reporte_Financiero_FoodExpress.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Reporte CSV descargado", "success");
+        }
+
+        function imprimirReporteFinanciero() {
+            if (!ultimoReporteFinanciero) {
+                showToast("Primero consulta un periodo para imprimir.", "info");
+                return;
+            }
+            const r = ultimoReporteFinanciero.resumen;
+            const rows = (ultimoReporteFinanciero.pedidos || []).map(p =>
+                `<tr><td>#FE-${p.id}</td><td>${new Date(p.fecha_creacion).toLocaleString('es-CO')}</td><td>${p.cliente_nombre}</td><td>${p.metodo_pago || 'Efectivo'}</td><td>${p.estado_pago || 'Pagado'}</td><td>${formatMoney(p.subtotal || p.total)}</td><td>${formatMoney(p.costo_envio || 0)}</td><td><strong>${formatMoney(p.total)}</strong></td></tr>`
+            ).join('');
+            const win = window.open('', '_blank', 'width=900,height=700');
+            win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Reporte Financiero FoodExpress</title>
+                <style>body{font-family:Arial,sans-serif;padding:24px;color:#111827;}h1{color:#ff5e36;margin-bottom:4px;}.kpis{display:flex;gap:16px;margin:16px 0;}.kpi{flex:1;border:1px solid #cbd5e1;border-radius:8px;padding:12px;}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px;}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left;}th{background:#f1f5f9;}</style></head>
+                <body><h1>FoodExpress — Reporte Financiero</h1><p>Generado: ${new Date().toLocaleString('es-CO')}</p>
+                <div class="kpis"><div class="kpi"><small>Pedidos</small><div><strong>${r.totalPedidos}</strong></div></div><div class="kpi"><small>Ingresos Productos</small><div><strong>${formatMoney(r.ingresosProductos)}</strong></div></div><div class="kpi"><small>Costos Envío</small><div><strong>${formatMoney(r.ingresosEnvio)}</strong></div></div><div class="kpi"><small>Ventas Totales</small><div><strong>${formatMoney(r.ventasTotales)}</strong></div></div></div>
+                <table><thead><tr><th>Orden</th><th>Fecha</th><th>Cliente</th><th>Método</th><th>Estado Pago</th><th>Subtotal</th><th>Envío</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>
+                <script>window.print();<\/script></body></html>`);
+            win.document.close();
         }
 
         async function crearUsuarioAdmin(event) {
             event.preventDefault();
             const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
             const usuario = document.getElementById('admin-new-user').value.trim();
+            const correo = document.getElementById('admin-new-email').value.trim();
             const contrasena = document.getElementById('admin-new-pass').value;
             const rol = document.getElementById('admin-new-rol').value;
 
@@ -1756,7 +2457,7 @@
                 const res = await fetch(`${API_BASE}/api/usuarios`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.token}` },
-                    body: JSON.stringify({ usuario, contraseña: contrasena, rol })
+                    body: JSON.stringify({ usuario, correo: correo || undefined, contraseña: contrasena, rol })
                 });
                 const data = await res.json();
                 if (res.ok) {
@@ -1860,7 +2561,7 @@
         }
 
         // ==========================================
-        // CONFIRMAR PEDIDO REAL DESDE EL CARRITO
+        // CONFIRMAR PEDIDO REAL DESDE EL CARRITO (RF15, RF32)
         // ==========================================
         async function confirmarPedidoReal() {
             if (shoppingCart.length === 0) return;
@@ -1883,11 +2584,19 @@
                 const res = await fetch(`${API_BASE}/api/pedidos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.token}` },
-                    body: JSON.stringify({ items })
+                    body: JSON.stringify({ items, metodo_pago: selectedPaymentMethod })
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    openOrderModal(data.pedidoId);
+                    openOrderModal({
+                        pedidoId: data.pedidoId,
+                        subtotal: data.subtotal,
+                        costo_envio: data.costo_envio,
+                        total: data.total,
+                        metodo_pago: data.metodo_pago,
+                        estado_pago: data.estado_pago,
+                        items
+                    });
                     shoppingCart = [];
                     updateCartUI();
                 } else {
