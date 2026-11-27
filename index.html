@@ -1999,6 +1999,21 @@
                             </button>
                         </form>
 
+                        <!-- Buscador y Filtro de Usuarios por Nombre / Rol -->
+                        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+                            <div style="position:relative;flex:1;min-width:220px;">
+                                <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8b949e;"></i>
+                                <input id="admin-user-search" type="text" placeholder="Buscar usuario por nombre o correo..." oninput="filtrarUsuariosAdmin()" style="width:100%;padding:10px 12px 10px 36px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;font-size:0.9rem;">
+                            </div>
+                            <select id="admin-user-role-filter" onchange="filtrarUsuariosAdmin()" style="padding:10px 14px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;font-size:0.88rem;">
+                                <option value="todos">Todos los roles</option>
+                                <option value="cliente">cliente</option>
+                                <option value="cocina">cocina</option>
+                                <option value="admin">admin</option>
+                            </select>
+                            <span id="admin-user-count" style="font-size:0.84rem;color:#8b949e;white-space:nowrap;">0 usuarios</span>
+                        </div>
+
                         <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;overflow-x:auto;">
                             <table style="width:100%;border-collapse:collapse;text-align:left;font-size:0.9rem;">
                                 <thead>
@@ -2100,6 +2115,21 @@
                         </div>
 
                         <!-- Historial de Transacciones (RF34) -->
+                        <!-- Buscador y Filtro de Usuarios por Nombre / Rol -->
+                        <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+                            <div style="position:relative;flex:1;min-width:220px;">
+                                <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8b949e;"></i>
+                                <input id="admin-user-search" type="text" placeholder="Buscar usuario por nombre o correo..." oninput="filtrarUsuariosAdmin()" style="width:100%;padding:10px 12px 10px 36px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;font-size:0.9rem;">
+                            </div>
+                            <select id="admin-user-role-filter" onchange="filtrarUsuariosAdmin()" style="padding:10px 14px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;font-size:0.88rem;">
+                                <option value="todos">Todos los roles</option>
+                                <option value="cliente">cliente</option>
+                                <option value="cocina">cocina</option>
+                                <option value="admin">admin</option>
+                            </select>
+                            <span id="admin-user-count" style="font-size:0.84rem;color:#8b949e;white-space:nowrap;">0 usuarios</span>
+                        </div>
+
                         <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;overflow-x:auto;">
                             <div style="padding:14px 16px;border-bottom:1px solid #30363d;">
                                 <h4 style="margin:0;color:#fff;font-size:1rem;"><i class="fa-solid fa-money-check-dollar" style="color:#3fb950;"></i> Historial de Transacciones de Pago (RF34)</h4>
@@ -2152,6 +2182,65 @@
         }
 
         let ultimoReporteFinanciero = null;
+        let adminUsuariosCache = [];
+
+        function filtrarUsuariosAdmin() {
+            renderAdminUsersTable();
+        }
+
+        function renderAdminUsersTable() {
+            const tbody = document.getElementById('admin-users-tbody');
+            const countEl = document.getElementById('admin-user-count');
+            if (!tbody) return;
+
+            const query = (document.getElementById('admin-user-search')?.value || '').trim().toLowerCase();
+            const roleFilter = document.getElementById('admin-user-role-filter')?.value || 'todos';
+
+            const filtrados = adminUsuariosCache.filter(u => {
+                const matchText = !query ||
+                    (u.usuario || '').toLowerCase().includes(query) ||
+                    (u.correo || '').toLowerCase().includes(query);
+                const matchRol = roleFilter === 'todos' || (u.rol || 'cliente') === roleFilter;
+                return matchText && matchRol;
+            });
+
+            if (countEl) {
+                countEl.innerText = `Mostrando ${filtrados.length} de ${adminUsuariosCache.length} usuarios`;
+            }
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:#8b949e;">No se encontraron usuarios que coincidan con "${query}".</td></tr>`;
+                return;
+            }
+
+            const rolBadge = {
+                admin: 'background:rgba(168,85,247,0.16);border:1px solid #a855f7;color:#d8b4fe;',
+                cocina: 'background:rgba(56,139,253,0.16);border:1px solid #388bfd;color:#58a6ff;',
+                cliente: 'background:rgba(46,160,67,0.16);border:1px solid #3fb950;color:#3fb950;'
+            };
+            tbody.innerHTML = filtrados.map(u => `
+                <tr style="border-bottom:1px solid #21262d;">
+                    <td style="padding:12px 16px;color:#8b949e;">#${u.id}</td>
+                    <td style="padding:12px 16px;font-weight:600;color:#fff;">${u.usuario}</td>
+                    <td style="padding:12px 16px;color:#8b949e;">${u.correo || '—'}</td>
+                    <td style="padding:12px 16px;">
+                        <span style="${rolBadge[u.rol] || rolBadge.cliente}padding:3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;">${u.rol || 'cliente'}</span>
+                    </td>
+                    <td style="padding:12px 16px;">
+                        <select onchange="cambiarRolUsuario(${u.id}, this.value)" style="padding:6px 10px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;font-size:0.84rem;">
+                            <option value="cliente" ${u.rol === 'cliente' ? 'selected' : ''}>cliente</option>
+                            <option value="cocina" ${u.rol === 'cocina' ? 'selected' : ''}>cocina</option>
+                            <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>admin</option>
+                        </select>
+                    </td>
+                    <td style="padding:12px 16px;text-align:right;">
+                        <button onclick="eliminarUsuarioAdmin(${u.id}, '${u.usuario}')" style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#f87171;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.8rem;font-weight:600;">
+                            <i class="fa-solid fa-trash"></i> Eliminar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
 
         async function cargarAdminDatos() {
             const session = JSON.parse(sessionStorage.getItem('foodexpress_user') || '{}');
@@ -2174,35 +2263,9 @@
                 }
 
                 if (Array.isArray(usuarios)) {
+                    adminUsuariosCache = usuarios;
                     document.getElementById('kpi-usuarios').innerText = usuarios.length;
-                    const tbody = document.getElementById('admin-users-tbody');
-                    const rolBadge = {
-                        admin: 'background:rgba(168,85,247,0.16);border:1px solid #a855f7;color:#d8b4fe;',
-                        cocina: 'background:rgba(56,139,253,0.16);border:1px solid #388bfd;color:#58a6ff;',
-                        cliente: 'background:rgba(46,160,67,0.16);border:1px solid #3fb950;color:#3fb950;'
-                    };
-                    tbody.innerHTML = usuarios.map(u => `
-                        <tr style="border-bottom:1px solid #21262d;">
-                            <td style="padding:12px 16px;color:#8b949e;">#${u.id}</td>
-                            <td style="padding:12px 16px;font-weight:600;color:#fff;">${u.usuario}</td>
-                            <td style="padding:12px 16px;color:#8b949e;">${u.correo || '—'}</td>
-                            <td style="padding:12px 16px;">
-                                <span style="${rolBadge[u.rol] || rolBadge.cliente}padding:3px 10px;border-radius:999px;font-size:0.78rem;font-weight:700;">${u.rol || 'cliente'}</span>
-                            </td>
-                            <td style="padding:12px 16px;">
-                                <select onchange="cambiarRolUsuario(${u.id}, this.value)" style="padding:6px 10px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#fff;font-family:Outfit,sans-serif;font-size:0.84rem;">
-                                    <option value="cliente" ${u.rol === 'cliente' ? 'selected' : ''}>cliente</option>
-                                    <option value="cocina" ${u.rol === 'cocina' ? 'selected' : ''}>cocina</option>
-                                    <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>admin</option>
-                                </select>
-                            </td>
-                            <td style="padding:12px 16px;text-align:right;">
-                                <button onclick="eliminarUsuarioAdmin(${u.id}, '${u.usuario}')" style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#f87171;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:Outfit,sans-serif;font-size:0.8rem;font-weight:600;">
-                                    <i class="fa-solid fa-trash"></i> Eliminar
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('');
+                    renderAdminUsersTable();
                 }
 
                 if (Array.isArray(pedidos)) {
